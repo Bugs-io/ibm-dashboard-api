@@ -4,6 +4,9 @@ import logging
 from uuid import uuid4
 from fastapi import FastAPI, UploadFile, status, HTTPException
 from google.cloud import storage
+from dotenv import load_dotenv
+
+load_dotenv()
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "credentials.json"
 
@@ -11,7 +14,7 @@ app = FastAPI()
 storage_client = storage.Client()
 
 EXCEL_MIME_TYPE = ["application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"]
-BUCKET_NAME = "ibm-dashboard_test_bucket"
+BUCKET_NAME = os.environ["BUCKET_NAME"]
 
 bucket = storage_client.get_bucket(BUCKET_NAME)
 
@@ -50,5 +53,3 @@ async def upload(file: UploadFile | None = None):
     await cloud_upload(content=content, key=file_name)
 
     return {"file_name": file_name}
-
-
