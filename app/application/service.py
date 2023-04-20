@@ -1,7 +1,7 @@
 import magic
 from kink import inject
-from app.infrastructure.object_storage.object_storage import ObjectStorage
-from app.application.errors import InvalidFileTypeError
+from app.application.ports import ObjectStorage, UserRepository, Encrypter
+from app.application.errors import InvalidFileTypeError, InvalidEmailError
 from app.application.dtos import DatasetDTO
 from app.domain.datasets import InternalDataset
 
@@ -10,11 +10,20 @@ SPREADSHEET_MIME_TYPES = [
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         ]
 
+EMAIL_DOMAIN = "@ibm.com"
+
 
 @inject
 class IBMDashboardService:
-    def __init__(self, object_storage: ObjectStorage):
+    def __init__(
+            self,
+            encrypter: Encrypter,
+            object_storage: ObjectStorage,
+            user_repository: UserRepository
+            ):
+        self.encrypter = encrypter
         self.object_storage = object_storage
+        self.user_repository = user_repository
 
     def _is_valid_file(self, file_content: bytes) -> bool:
         file_type = magic.from_buffer(file_content, mime=True)
@@ -34,3 +43,25 @@ class IBMDashboardService:
         # TODO: Save dataset to databse
 
         return DatasetDTO(name=dataset.name, path=dataset.path)
+
+    def create_user(self, email: str, password: str):
+        if EMAIL_DOMAIN not in email:
+            raise InvalidEmailError
+
+        if self.user_repository.get_by_email(email):
+            raise UserAlreadyExistsError
+
+        hashed_password = self.encrypter.encrypt_password(password)
+
+        user = User(
+                id=uuid_generator.generate(),
+                email=email,
+                password=hashed_password
+                )
+
+        try:
+            self.user_repository.save(user)
+        except Exception:
+            raise UserCreationError
+
+        return UserDTO(id=user.id, email=user.email)

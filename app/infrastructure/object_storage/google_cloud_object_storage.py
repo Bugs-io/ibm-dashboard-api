@@ -1,4 +1,4 @@
-from app.infrastructure.object_storage.object_storage import ObjectStorage
+from app.application.ports import ObjectStorage
 from google.cloud import storage
 
 
