@@ -1,2 +1,6 @@
-class InvalidFileTypeError (Exception):
+class InvalidFileTypeError(Exception):
+    pass
+
+
+class InvalidEmailError(Exception):
     pass
