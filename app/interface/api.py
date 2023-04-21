@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from kink import di
 
 from app.application.service import IBMDashboardService
+from app.application.dtos import SignupRequestDTO
 
 app = FastAPI()
 
@@ -25,3 +26,17 @@ async def upload_internal_dataset(
             status_code=status.HTTP_201_CREATED,
             content=result.dict()
             )
+
+
+@app.post("/signup")
+async def signup(
+        req: SignupRequestDTO,
+        service: IBMDashboardService = Depends(lambda: di[IBMDashboardService])
+):
+    result = service.create_user(req.email, req.password)
+
+    return JSONResponse(
+            status_code=status.HTTP_201_CREATED,
+            content=result.dict()
+            )
+
