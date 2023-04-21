@@ -3,14 +3,23 @@ from app.application.ports import UserRepository
 from app.domain.user import User
 
 db = Database()
-db.bind(provider='postgres', user='', password='', host='', database='')
-db.generate_mapping(create_tables=True)
+db.bind(
+        provider='postgres',
+        user='postgres',
+        password='',
+        host='localhost',
+        database='ibm_dashboard'
+        )
 
 
 class UserModel(db.Entity):
+    _table_ = "users"
     user_id = PrimaryKey(str)
     email = Required(str, unique=True)
     password = Required(str)
+
+
+db.generate_mapping(create_tables=True)
 
 
 class PostgreSQLUserRepository(UserRepository):

@@ -4,7 +4,8 @@ from os.path import join, dirname
 from dotenv import load_dotenv
 
 from app.application.service import IBMDashboardService
-from app.infrastructure.object_storage.google_cloud_object_storage import GoogleCloudStorage
+from app.infrastructure import GoogleCloudStorage, PostgreSQLUserRepository,\
+    BcryptEncrypter
 
 
 def bootstrap_di():
@@ -13,6 +14,9 @@ def bootstrap_di():
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "credentials.json"
 
     bucket_name = "ibm-dashboard_test_bucket"
-    object_storage = GoogleCloudStorage(bucket_name)
 
-    di[IBMDashboardService] = IBMDashboardService(object_storage)
+    di[IBMDashboardService] = IBMDashboardService(
+            encrypter=BcryptEncrypter(),
+            object_storage=GoogleCloudStorage(bucket_name),
+            user_repository=PostgreSQLUserRepository(),
+            )

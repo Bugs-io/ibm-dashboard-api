@@ -9,3 +9,8 @@ class DatasetDTO(BaseModel):
 class UserDTO(BaseModel):
     id: str
     email: str
+
+
+class SignupRequestDTO(BaseModel):
+    email: str
+    password: str

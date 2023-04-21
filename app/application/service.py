@@ -1,4 +1,6 @@
 import magic
+import uuid
+
 from kink import inject
 from app.application.ports import ObjectStorage, UserRepository,\
             Encrypter, IDGenerator
@@ -20,12 +22,10 @@ class IBMDashboardService:
     def __init__(
             self,
             encrypter: Encrypter,
-            id_generator: IDGenerator,
             object_storage: ObjectStorage,
             user_repository: UserRepository
             ):
         self.encrypter = encrypter
-        self.id_generator = id_generator
         self.object_storage = object_storage
         self.user_repository = user_repository
 
@@ -58,7 +58,7 @@ class IBMDashboardService:
         hashed_password = self.encrypter.encrypt_password(password)
 
         user = User(
-                id=self.id_generator.generate(),
+                id=str(uuid.uuid4()),
                 email=email,
                 password=hashed_password
                 )
