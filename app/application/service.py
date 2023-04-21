@@ -1,9 +1,11 @@
 import magic
 from kink import inject
-from app.application.ports import ObjectStorage, UserRepository, Encrypter
-from app.application.errors import InvalidFileTypeError, InvalidEmailError
-from app.application.dtos import DatasetDTO
-from app.domain.datasets import InternalDataset
+from app.application.ports import ObjectStorage, UserRepository,\
+            Encrypter, IDGenerator
+from app.application.errors import InvalidFileTypeError, InvalidEmailError,\
+    UserAlreadyExistsError, UserCreationError
+from app.application.dtos import DatasetDTO, UserDTO
+from app.domain import InternalDataset, User
 
 SPREADSHEET_MIME_TYPES = [
         "application/vnd.ms-excel",
@@ -18,10 +20,12 @@ class IBMDashboardService:
     def __init__(
             self,
             encrypter: Encrypter,
+            id_generator: IDGenerator,
             object_storage: ObjectStorage,
             user_repository: UserRepository
             ):
         self.encrypter = encrypter
+        self.id_generator = id_generator
         self.object_storage = object_storage
         self.user_repository = user_repository
 
@@ -54,7 +58,7 @@ class IBMDashboardService:
         hashed_password = self.encrypter.encrypt_password(password)
 
         user = User(
-                id=uuid_generator.generate(),
+                id=self.id_generator.generate(),
                 email=email,
                 password=hashed_password
                 )
