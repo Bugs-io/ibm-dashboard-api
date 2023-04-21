@@ -48,4 +48,3 @@ class PostgreSQLUserRepository(UserRepository):
                     email=user_record.email,
                     password=user_record.password
                     )
-

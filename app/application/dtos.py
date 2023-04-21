@@ -10,7 +10,6 @@ class UserDTO(BaseModel):
     id: str
     email: str
 
-
 class AuthRequestDTO(BaseModel):
     email: str
     password: str

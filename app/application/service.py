@@ -8,6 +8,9 @@ from app.application.errors import InvalidFileTypeError, InvalidEmailError,\
     UserAlreadyExistsError, UserCreationError, UserDoesNotExistError,\
     InvalidPasswordError
 from app.application.dtos import DatasetDTO, AuthRequestDTO, AuthResponseDTO
+from app.application.errors import InvalidFileTypeError, InvalidEmailError,\
+    UserAlreadyExistsError, UserCreationError
+from app.application.dtos import DatasetDTO, UserDTO
 from app.domain import InternalDataset, User
 
 SPREADSHEET_MIME_TYPES = [
@@ -23,11 +26,13 @@ class IBMDashboardService:
     def __init__(
             self,
             encrypter: Encrypter,
+            id_generator: IDGenerator,
             object_storage: ObjectStorage,
             token_manager: TokenManager,
             user_repository: UserRepository
             ):
         self.encrypter = encrypter
+        self.id_generator = id_generator
         self.object_storage = object_storage
         self.token_manager = token_manager
         self.user_repository = user_repository
