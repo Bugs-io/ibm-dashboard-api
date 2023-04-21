@@ -4,3 +4,9 @@ class InvalidFileTypeError(Exception):
 
 class InvalidEmailError(Exception):
     pass
+
+class UserAlreadyExistsError(Exception):
+    pass
+
+class UserCreationError(Exception):
+    pass
