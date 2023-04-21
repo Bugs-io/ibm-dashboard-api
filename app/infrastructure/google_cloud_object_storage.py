@@ -16,3 +16,4 @@ class GoogleCloudStorage(ObjectStorage):
         blob.upload_from_string(file_content)
 
         return blob.public_url
+
