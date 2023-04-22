@@ -11,6 +11,12 @@ class UserDTO(BaseModel):
     email: str
 
 
-class SignupRequestDTO(BaseModel):
+class AuthRequestDTO(BaseModel):
     email: str
     password: str
+
+
+class AuthResponseDTO(BaseModel):
+    id: str
+    email: str
+    id_token: str
