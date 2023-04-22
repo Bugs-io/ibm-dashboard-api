@@ -3,10 +3,11 @@ import uuid
 
 from kink import inject
 from app.application.ports import ObjectStorage, UserRepository,\
-            Encrypter, IDGenerator
+        Encrypter, TokenManager
 from app.application.errors import InvalidFileTypeError, InvalidEmailError,\
-    UserAlreadyExistsError, UserCreationError
-from app.application.dtos import DatasetDTO, UserDTO
+    UserAlreadyExistsError, UserCreationError, UserDoesNotExistError,\
+    InvalidPasswordError
+from app.application.dtos import DatasetDTO, AuthRequestDTO, AuthResponseDTO
 from app.domain import InternalDataset, User
 
 SPREADSHEET_MIME_TYPES = [
@@ -23,10 +24,12 @@ class IBMDashboardService:
             self,
             encrypter: Encrypter,
             object_storage: ObjectStorage,
+            token_manager: TokenManager,
             user_repository: UserRepository
             ):
         self.encrypter = encrypter
         self.object_storage = object_storage
+        self.token_manager = token_manager
         self.user_repository = user_repository
 
     def _is_valid_file(self, file_content: bytes) -> bool:
@@ -48,7 +51,10 @@ class IBMDashboardService:
 
         return DatasetDTO(name=dataset.name, path=dataset.path)
 
-    def create_user(self, email: str, password: str):
+    def signup(self, input_dto: AuthRequestDTO) -> AuthResponseDTO:
+        email = input_dto.email
+        password = input_dto.password
+
         if EMAIL_DOMAIN not in email:
             raise InvalidEmailError
 
@@ -68,4 +74,21 @@ class IBMDashboardService:
         except Exception:
             raise UserCreationError
 
-        return UserDTO(id=user.id, email=user.email)
+        token = self.token_manager.generate_token({"user_id": user.id})
+
+        return AuthResponseDTO(id=user.id, email=user.email, id_token=token)
+
+    def login(self, input_dto: AuthRequestDTO) -> AuthResponseDTO:
+        email = input_dto.email
+        password = input_dto.password
+
+        user = self.user_repository.get_by_email(email)
+        if not user:
+            raise UserDoesNotExistError
+
+        if not self.encrypter.check_password(password, user.password):
+            raise InvalidPasswordError
+
+        token = self.token_manager.generate_token({"user_id": user.id})
+
+        return AuthResponseDTO(id=user.id, email=user.email, id_token=token)

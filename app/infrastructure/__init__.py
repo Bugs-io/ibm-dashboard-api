@@ -1,3 +1,4 @@
 from .bcrypt_encrypter import BcryptEncrypter
 from .google_cloud_object_storage import GoogleCloudStorage
 from .postgresql_user_repository import PostgreSQLUserRepository
+from .jwt_manager import JWTManager

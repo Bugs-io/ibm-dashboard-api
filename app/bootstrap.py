@@ -1,22 +1,25 @@
 import os
 from kink import di
-from os.path import join, dirname
 from dotenv import load_dotenv
 
 from app.application.service import IBMDashboardService
 from app.infrastructure import GoogleCloudStorage, PostgreSQLUserRepository,\
-    BcryptEncrypter
+    BcryptEncrypter, JWTManager
+
+MILLISECONDS_IN_A_DAY = 86400000
+
 
 
 def bootstrap_di():
-    dotenv_path = join(dirname(__file__), '.env')
-    load_dotenv(dotenv_path)
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "credentials.json"
-
-    bucket_name = "ibm-dashboard_test_bucket"
-
     di[IBMDashboardService] = IBMDashboardService(
             encrypter=BcryptEncrypter(),
-            object_storage=GoogleCloudStorage(bucket_name),
+            object_storage=GoogleCloudStorage(
+                bucket_name=os.getenv('BUCKET_NAME'),
+                ),
+            token_manager=JWTManager(
+                algorithm=os.getenv('JWT_ALGORITHM'),
+                secret_key=os.getenv('JWT_SECRET_KEY'),
+                expiration_delta=MILLISECONDS_IN_A_DAY
+                ),
             user_repository=PostgreSQLUserRepository(),
             )
