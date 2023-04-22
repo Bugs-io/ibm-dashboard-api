@@ -3,7 +3,9 @@ from fastapi.responses import JSONResponse
 from kink import di
 
 from app.application.service import IBMDashboardService
-from app.application.dtos import SignupRequestDTO
+from app.application.dtos import AuthRequestDTO
+from app.application.errors import UserAlreadyExistsError, InvalidEmailError,\
+    UserCreationError, InvalidPasswordError, UserDoesNotExistError
 
 app = FastAPI()
 
@@ -30,13 +32,74 @@ async def upload_internal_dataset(
 
 @app.post("/signup")
 async def signup(
-        req: SignupRequestDTO,
+        req: AuthRequestDTO,
         service: IBMDashboardService = Depends(lambda: di[IBMDashboardService])
 ):
-    result = service.create_user(req.email, req.password)
+    try:
+        result = service.signup(req)
+        return build_json_success_response(
+                status.HTTP_201_CREATED,
+                result.dict()
+                )
+    except UserAlreadyExistsError:
+        return build_json_failure_response(
+                status.HTTP_409_CONFLICT,
+                "USER_ALREADY_EXISTS"
+                )
+    except InvalidEmailError:
+        return build_json_failure_response(
+                status.HTTP_400_BAD_REQUEST,
+                "INVALID_EMAIL"
+                )
+    except UserCreationError:
+        return build_json_failure_response(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "USER_CREATION_ERROR"
+                )
+    else:
+        return build_json_failure_response(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "UNEXPECTED_ERROR"
+                )
 
+
+@app.post("/login")
+async def login(
+        req: AuthRequestDTO,
+        service: IBMDashboardService = Depends(lambda: di[IBMDashboardService])
+):
+    try:
+        result = service.login(req)
+        return build_json_success_response(
+                status.HTTP_200_OK,
+                result.dict()
+                )
+    except UserDoesNotExistError:
+        return build_json_failure_response(
+                status.HTTP_404_NOT_FOUND,
+                "USER_DOES_NOT_EXIST"
+                )
+    except InvalidPasswordError:
+        return build_json_failure_response(
+                status.HTTP_401_UNAUTHORIZED,
+                "INVALID_PASSWORD"
+                )
+    else:
+        return build_json_failure_response(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "UNEXPECTED_ERROR"
+                )
+
+
+def build_json_success_response(status_code, content) -> JSONResponse:
     return JSONResponse(
-            status_code=status.HTTP_201_CREATED,
-            content=result.dict()
+            status_code=status_code,
+            content=content
             )
 
+
+def build_json_failure_response(status_code, error_code) -> JSONResponse:
+    return JSONResponse(
+            status_code=status_code,
+            content={"error_code": error_code}
+            )
