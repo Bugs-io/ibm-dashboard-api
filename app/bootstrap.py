@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 from app.application.service import IBMDashboardService
 from app.infrastructure import GoogleCloudStorage, PostgreSQLUserRepository,\
-    BcryptEncrypter, JWTManager
+    BcryptEncrypter, JWTManager, PostgreSQLInternalDatasetRepository
 
 MILLISECONDS_IN_A_DAY = 86400000
 
@@ -13,6 +13,7 @@ MILLISECONDS_IN_A_DAY = 86400000
 def bootstrap_di():
     di[IBMDashboardService] = IBMDashboardService(
             encrypter=BcryptEncrypter(),
+            internal_dataset_repository=PostgreSQLInternalDatasetRepository(),
             object_storage=GoogleCloudStorage(
                 bucket_name=os.getenv('BUCKET_NAME'),
                 ),
