@@ -1,6 +1,9 @@
 class ObjectStorage:
-    def upload_internal_raw_dataset(self, key: str, content: bytes):
+    def upload_raw_internal_dataset(self, file_name: str, file_content: bytes):
         pass
 
-    def upload_internal_processed_dataset(self, key: str, content: bytes):
+    def upload_processed_internal_dataset(
+            self,
+            file_name: str,
+            file_content: bytes):
         pass

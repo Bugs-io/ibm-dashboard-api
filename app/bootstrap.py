@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 from app.application.service import IBMDashboardService
 from app.infrastructure import GoogleCloudStorage, PostgreSQLUserRepository,\
-    BcryptEncrypter, JWTManager
+    BcryptEncrypter, JWTManager, PostgreSQLInternalDatasetRepository
 
 JWT_ALGORITHM = "HS256"
 JWT_SECRET_KEY = "secret"
@@ -21,6 +21,7 @@ def bootstrap_di():
 
     di[IBMDashboardService] = IBMDashboardService(
             encrypter=BcryptEncrypter(),
+            internal_dataset_repository=PostgreSQLInternalDatasetRepository(),
             object_storage=GoogleCloudStorage(
                 bucket_name=BUCKET_NAME
                 ),

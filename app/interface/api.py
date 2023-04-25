@@ -56,12 +56,11 @@ async def signup(
                 status.HTTP_500_INTERNAL_SERVER_ERROR,
                 "USER_CREATION_ERROR"
                 )
-    else:
-        return build_json_failure_response(
-                status.HTTP_500_INTERNAL_SERVER_ERROR,
-                "UNEXPECTED_ERROR"
-                )
 
+    return build_json_failure_response(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "UNEXPECTED_ERROR"
+            )
 
 @app.post("/login")
 async def login(
@@ -84,11 +83,10 @@ async def login(
                 status.HTTP_401_UNAUTHORIZED,
                 "INVALID_PASSWORD"
                 )
-    else:
-        return build_json_failure_response(
-                status.HTTP_500_INTERNAL_SERVER_ERROR,
-                "UNEXPECTED_ERROR"
-                )
+    return build_json_failure_response(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "UNEXPECTED_ERROR"
+            )
 
 
 def build_json_success_response(status_code, content) -> JSONResponse:

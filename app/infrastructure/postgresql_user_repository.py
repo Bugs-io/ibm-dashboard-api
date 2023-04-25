@@ -1,6 +1,6 @@
 from pony.orm import db_session, Database, PrimaryKey, Required
 from app.application.ports import UserRepository
-from app.domain.user import User
+from app.domain import User
 
 db = Database()
 db.bind(
