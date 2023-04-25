@@ -1,8 +1,7 @@
 import os
 from pony.orm import db_session, Database, PrimaryKey, Required
 from app.application.ports import UserRepository
-from dotenv import load_dotenv
-from app.domain.user import User
+from app.domain import User
 
 load_dotenv()
 
@@ -53,4 +52,3 @@ class PostgreSQLUserRepository(UserRepository):
                     email=user_record.email,
                     password=user_record.password
                     )
-

@@ -1,20 +1,24 @@
 import magic
 import uuid
-
 from kink import inject
 from app.application.ports import ObjectStorage, UserRepository,\
-        Encrypter, TokenManager
+        Encrypter, TokenManager, InternalDatasetRepository, IDGenerator
 from app.application.errors import InvalidFileTypeError, InvalidEmailError,\
     UserAlreadyExistsError, UserCreationError, UserDoesNotExistError,\
     InvalidPasswordError
 from app.application.dtos import DatasetDTO, AuthRequestDTO, AuthResponseDTO,\
         UserDTO
 from app.domain import InternalDataset, User
+from typing import List
+from uuid import uuid4
+from datetime import datetime
 
 SPREADSHEET_MIME_TYPES = [
         "application/vnd.ms-excel",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         ]
+
+CSV_MIME_TYPE = ["text/csv"]
 
 EMAIL_DOMAIN = "@ibm.com"
 
@@ -26,36 +30,76 @@ class IBMDashboardService:
             encrypter: Encrypter,
             object_storage: ObjectStorage,
             token_manager: TokenManager,
-            user_repository: UserRepository
+            user_repository: UserRepository,
+            internal_dataset_repository: InternalDatasetRepository
             ):
         self.encrypter = encrypter
         self.object_storage = object_storage
         self.token_manager = token_manager
         self.user_repository = user_repository
+        self.internal_dataset_repository = internal_dataset_repository
 
-    def _is_valid_file(self, file_content: bytes) -> bool:
+    def _is_valid_file(
+            self,
+            file_content: bytes,
+            file_types: List[str]
+            ) -> bool:
         file_type = magic.from_buffer(file_content, mime=True)
-        return file_type in SPREADSHEET_MIME_TYPES
+        return file_type in file_types
 
-    def get_user_by_id(self, user_id: str):
-        user = self.user_repository.get_by_id(user_id)
-
-        return UserDTO(id=user_id, email=user.email)
-
-    def upload_internal_dataset(self, file_name: str, file_content: bytes):
-        if not self._is_valid_file(file_content):
+    def upload_raw_internal_dataset(
+            self,
+            file_name: str,
+            file_content: bytes
+            ) -> str:
+        if not self._is_valid_file(file_content, SPREADSHEET_MIME_TYPES):
             raise InvalidFileTypeError
 
-        path = self.object_storage.upload_internal_raw_dataset(
+        raw_file_path = self.object_storage.upload_raw_internal_dataset(
                 file_name,
                 file_content
                 )
+        return raw_file_path
 
-        dataset = InternalDataset(name=file_name, path=path, is_active=True)
+    def upload_processed_internal_dataset(
+            self,
+            file_name: str,
+            file_content: bytes) -> str:
+        if not self._is_valid_file(file_content, CSV_MIME_TYPE):
+            raise InvalidFileTypeError
 
-        # TODO: Save dataset to databse
+        path = self.object_storage.upload_processed_internal_dataset(
+                file_name,
+                file_content
+                )
+        return path
 
-        return DatasetDTO(name=dataset.name, path=dataset.path)
+    def upload_files(self, file_name: str, file_content: bytes):
+        raw_file_path = self.upload_raw_internal_dataset(
+                file_name=file_name,
+                file_content=file_content)
+
+        # TODO: call data analysis IBMDashboardService
+        self.call_analysis_service()
+
+        processed_file_path = self.upload_processed_internal_dataset(
+                file_name=file_name,
+                file_content=file_content
+                )
+        dataset = InternalDataset(
+                id=str(uuid4()),
+                processed_file_path=processed_file_path,
+                raw_file_path=raw_file_path,
+                is_active=True,
+                uploaded_at=datetime.utcnow()
+            )
+
+        self.internal_dataset_repository.save(dataset)
+
+        return DatasetDTO(
+                id=dataset.id,
+                processed_file_path=dataset.processed_file_path,
+                raw_file_path=dataset.raw_file_path)
 
     def signup(self, input_dto: AuthRequestDTO) -> AuthResponseDTO:
         email = input_dto.email

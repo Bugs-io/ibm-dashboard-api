@@ -2,8 +2,9 @@ from pydantic import BaseModel
 
 
 class DatasetDTO(BaseModel):
-    name: str
-    path: str
+    id: str
+    processed_file_path: str
+    raw_file_path: str
 
 
 class UserDTO(BaseModel):
