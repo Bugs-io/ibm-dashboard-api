@@ -1,14 +1,17 @@
 from pony.orm import db_session, Database, PrimaryKey, Required
 from app.application.ports import UserRepository
 from app.domain import User
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 db = Database()
 db.bind(
-        provider='postgres',
-        user='postgres',
-        password='',
-        host='localhost',
-        database='ibm_dashboard'
+        provider=os.getenv('DB_PROVIDER'),
+        password=os.getenv('DB_PASSWORD'),
+        host=os.getenv('DB_HOST'),
+        database=os.getenv('DB_NAME')
         )
 
 

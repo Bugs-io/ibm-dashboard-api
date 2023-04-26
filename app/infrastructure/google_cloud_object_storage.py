@@ -7,14 +7,14 @@ class GoogleCloudStorage(ObjectStorage):
         self.bucket_name = bucket_name
         self.client = storage.Client()
 
-    def _get_bucket(self):
-        return self.client.get_bucket(self.bucket_name)
-
     def upload_file(self, file_path: str, file_content: bytes) -> str:
         bucket = self._get_bucket()
         blob = bucket.blob(file_path)
         blob.upload_from_string(file_content)
         return blob.public_url
+
+    def _get_bucket(self):
+        return self.client.get_bucket(self.bucket_name)
 
     def upload_raw_internal_dataset(self, file_name: str, file_content: bytes):
         directory = "raw_internal_datasets/"

@@ -22,8 +22,7 @@ async def upload_internal_dataset(
             )
 
     content = await file.read()
-    result = service.upload_internal_dataset(file.filename, content)
-
+    result = service.upload_files(file.filename, content)
     return JSONResponse(
             status_code=status.HTTP_201_CREATED,
             content=result.dict()
