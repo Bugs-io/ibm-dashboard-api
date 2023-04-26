@@ -2,6 +2,7 @@ import os
 from pony.orm import db_session, Database, PrimaryKey, Required
 from app.application.ports import UserRepository
 from app.domain import User
+from dotenv import load_dotenv
 
 load_dotenv()
 
