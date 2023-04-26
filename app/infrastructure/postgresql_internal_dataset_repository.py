@@ -4,15 +4,19 @@ from app.domain import InternalDataset
 from datetime import datetime
 from typing import List
 from uuid import UUID
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 db = Database()
 db.bind(
-    provider="postgres",
-    user="postgres",
-    password="",
-    host="localhost",
-    database="ibm_dashboard",
-)
+        provider=os.getenv('DB_PROVIDER'),
+        password=os.getenv('DB_PASSWORD'),
+        host=os.getenv('DB_HOST'),
+        database=os.getenv('DB_NAME')
+        )
+
 
 
 class InternalDatasetModel(db.Entity):
@@ -21,7 +25,7 @@ class InternalDatasetModel(db.Entity):
     processed_file_path = Required(str, unique=True)
     raw_file_path = Required(str, unique=True)
     is_active = Required(bool)
-    uploaded_at = Required(datetime.datetime, default=datetime.utcnow)
+    uploaded_at = Required(datetime, default=datetime.utcnow)
 
 
 db.generate_mapping(create_tables=True)
@@ -55,7 +59,8 @@ class PostgreSQLInternalDatasetRepository(InternalDatasetRepository):
         internal_dataset_record = InternalDatasetModel[internal_dataset_id]
         if internal_dataset_record:
             return self.to_internal_dataset(internal_dataset_record)
-
+    """
+    TODO CHECK THIS FUNCTION TYPING 
     @db_session
     def get_all_files(self) -> List[InternalDataset] | []:
         query = select(internal_dataset for internal_dataset in InternalDatasetModel)
@@ -65,6 +70,7 @@ class PostgreSQLInternalDatasetRepository(InternalDatasetRepository):
                     internal_dataset_record)
             all_internal_datasets.append(internal_dataset)
         return all_internal_datasets
+    """
 
     @db_session
     def get_active_file(self) -> InternalDataset | None:

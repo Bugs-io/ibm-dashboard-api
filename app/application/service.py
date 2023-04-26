@@ -2,16 +2,16 @@ import magic
 import uuid
 from kink import inject
 from app.application.ports import ObjectStorage, UserRepository,\
-        Encrypter, TokenManager, InternalDatasetRepository, IDGenerator
+        Encrypter, TokenManager, InternalDatasetRepository
 from app.application.errors import InvalidFileTypeError, InvalidEmailError,\
     UserAlreadyExistsError, UserCreationError, UserDoesNotExistError,\
     InvalidPasswordError
-from app.application.dtos import DatasetDTO, AuthRequestDTO, AuthResponseDTO,\
-        UserDTO
+from app.application.dtos import DatasetDTO, AuthRequestDTO, AuthResponseDTO
 from app.domain import InternalDataset, User
 from typing import List
 from uuid import uuid4
 from datetime import datetime
+import csv
 
 SPREADSHEET_MIME_TYPES = [
         "application/vnd.ms-excel",
@@ -65,8 +65,8 @@ class IBMDashboardService:
             self,
             file_name: str,
             file_content: bytes) -> str:
-        if not self._is_valid_file(file_content, CSV_MIME_TYPE):
-            raise InvalidFileTypeError
+        #if not self._is_valid_file(file_content, CSV_MIME_TYPE):
+        #   raise InvalidFileTypeError
 
         path = self.object_storage.upload_processed_internal_dataset(
                 file_name,
@@ -82,6 +82,14 @@ class IBMDashboardService:
         # TODO: call data analysis IBMDashboardService
         self.call_analysis_service()
 
+        # Open the CSV file
+        file_name = "file_example.csv"
+        with open('file_example.csv', 'r') as csvfile:
+            # Read the contents of the CSV file into a list of rows
+            rows = list(csv.reader(csvfile))
+
+        # Convert the rows to a byte string
+        file_content = bytes('\n'.join([','.join(row) for row in rows]), encoding='utf-8')
         processed_file_path = self.upload_processed_internal_dataset(
                 file_name=file_name,
                 file_content=file_content
