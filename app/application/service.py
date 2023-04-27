@@ -1,17 +1,20 @@
-import magic
-import uuid
 from kink import inject
 from app.application.ports import ObjectStorage, UserRepository,\
         Encrypter, TokenManager, InternalDatasetRepository
 from app.application.errors import InvalidFileTypeError, InvalidEmailError,\
     UserAlreadyExistsError, UserCreationError, UserDoesNotExistError,\
-    InvalidPasswordError
+    InvalidPasswordError, CSVCREATIONERROR
 from app.application.dtos import DatasetDTO, AuthRequestDTO, AuthResponseDTO
 from app.domain import InternalDataset, User
 from typing import List
+from dotenv import load_dotenv
 from uuid import uuid4
 from datetime import datetime
-import csv
+from os import getenv, path
+import magic
+import requests
+
+load_dotenv()
 
 SPREADSHEET_MIME_TYPES = [
         "application/vnd.ms-excel",
@@ -21,6 +24,8 @@ SPREADSHEET_MIME_TYPES = [
 CSV_MIME_TYPE = ["text/csv"]
 
 EMAIL_DOMAIN = "@ibm.com"
+
+ANALYSIS_SERVICE_URL = getenv("ANALYSIS_SERVICE_URL")
 
 
 @inject
@@ -50,6 +55,12 @@ class IBMDashboardService:
     def call_analysis_service(self):
         pass
 
+    def get_all_internal_datasets(self):
+        internal_datasets = (
+                self.internal_dataset_repository
+                    .get_all_files())
+        return internal_datasets
+
     def upload_raw_internal_dataset(
             self,
             file_name: str,
@@ -68,8 +79,9 @@ class IBMDashboardService:
             self,
             file_name: str,
             file_content: bytes) -> str:
-        #if not self._is_valid_file(file_content, CSV_MIME_TYPE):
-        #   raise InvalidFileTypeError
+
+        if not self._is_valid_file(file_content, CSV_MIME_TYPE):
+            raise InvalidFileTypeError
 
         path = self.object_storage.upload_processed_internal_dataset(
                 file_name,
@@ -77,33 +89,46 @@ class IBMDashboardService:
                 )
         return path
 
+    def get_processed_file_content(self, file_name: str, file_content: bytes):
+        file = (file_name, file_content)
+        url = ANALYSIS_SERVICE_URL + "/clean-internal-dataset"
+        response = requests.post(url, files={"file": file})
+
+        if response.status_code != 200:
+            raise CSVCREATIONERROR
+
+        return response.content
+
+    def _generate_processed_file_name(self, file_name: str):
+        file_name_without_extension = path.splitext(file_name)[0]
+        return f"{str(uuid4())}-{file_name_without_extension}.csv"
+
+    def _generate_raw_file_name(self, file_name: str):
+        return f"{str(uuid4())-{file_name}}"
+
     def upload_files(self, file_name: str, file_content: bytes):
-        raw_file_path = self.upload_raw_internal_dataset(
-                file_name=file_name,
-                file_content=file_content)
+        processed_file_content = self.get_processed_file_content(
+                file_name,
+                file_content
+                )
 
-        # TODO: call data analysis IBMDashboardService
-        self.call_analysis_service()
-
-        # Open the CSV file
-        file_name = "file_example.csv"
-        with open('file_example.csv', 'r') as csvfile:
-            # Read the contents of the CSV file into a list of rows
-            rows = list(csv.reader(csvfile))
-
-        # Convert the rows to a byte string
-        file_content = bytes('\n'.join([','.join(row) for row in rows]), encoding='utf-8')
         processed_file_path = self.upload_processed_internal_dataset(
-                file_name=file_name,
+                file_name=self._generate_processed_file_name(file_name),
+                file_content=processed_file_content
+                )
+
+        raw_file_path = self.upload_raw_internal_dataset(
+                file_name=self._generate_raw_file_name(file_name),
                 file_content=file_content
                 )
+
         dataset = InternalDataset(
                 id=str(uuid4()),
                 processed_file_path=processed_file_path,
                 raw_file_path=raw_file_path,
                 is_active=True,
                 uploaded_at=datetime.utcnow()
-            )
+                )
 
         self.internal_dataset_repository.save(dataset)
 
@@ -125,7 +150,7 @@ class IBMDashboardService:
         hashed_password = self.encrypter.encrypt_password(password)
 
         user = User(
-                id=str(uuid.uuid4()),
+                id=str(uuid4()),
                 email=email,
                 password=hashed_password
                 )

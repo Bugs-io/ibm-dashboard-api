@@ -1,11 +1,11 @@
 from fastapi import FastAPI, UploadFile, status, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from kink import di
-
 from app.application.service import IBMDashboardService
 from app.application.dtos import AuthRequestDTO
 from app.application.errors import UserAlreadyExistsError, InvalidEmailError,\
     UserCreationError, InvalidPasswordError, UserDoesNotExistError
+import json
 
 app = FastAPI()
 
@@ -61,6 +61,7 @@ async def signup(
             "UNEXPECTED_ERROR"
             )
 
+
 @app.post("/login")
 async def login(
         req: AuthRequestDTO,
@@ -85,6 +86,23 @@ async def login(
     return build_json_failure_response(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "UNEXPECTED_ERROR"
+            )
+
+
+@app.get("/get_all_internal_datasets")
+async def get_all_internal_datasets(
+        service: IBMDashboardService = Depends(lambda: di[IBMDashboardService])
+):
+    internal_datasets = service.get_all_internal_datasets()
+    response = json.dumps(
+            [internal_dataset.__dict__ for internal_dataset in internal_datasets],
+            indent=4,
+            sort_keys=True,
+            default=str)
+    json_response = json.loads(response)
+    return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"internal_datasets": json_response}
             )
 
 
