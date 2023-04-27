@@ -5,11 +5,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from kink import di
 from typing import Optional
 from jwt import InvalidTokenError
-
 from app.application.service import IBMDashboardService
 from app.application.dtos import AuthRequestDTO
 from app.application.errors import UserAlreadyExistsError, InvalidEmailError,\
     UserCreationError, InvalidPasswordError, UserDoesNotExistError
+import json
 
 PUBLIC_ROUTES = ["/login", "/signup"]
 
@@ -27,6 +27,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.middleware("http")
 async def auth_middleware(
         request: Request,
@@ -36,7 +37,6 @@ async def auth_middleware(
     if request.url.path in PUBLIC_ROUTES:
         response = await call_next(request)
         return response
-    
     token = None
     if request.headers.get("authorization"):
         token: Optional[str] = request.headers.get("authorization").split(" ")[1]
@@ -118,6 +118,7 @@ async def signup(
             "UNEXPECTED_ERROR"
             )
 
+
 @app.post("/login")
 async def login(
         req: AuthRequestDTO,
@@ -156,6 +157,23 @@ async def me(
     return build_json_success_response(
             status.HTTP_200_OK,
             result.dict()
+            )
+
+
+@app.get("/get_all_internal_datasets")
+async def get_all_internal_datasets(
+        service: IBMDashboardService = Depends(lambda: di[IBMDashboardService])
+):
+    internal_datasets = service.get_all_internal_datasets()
+    response = json.dumps(
+            [internal_dataset.__dict__ for internal_dataset in internal_datasets],
+            indent=4,
+            sort_keys=True,
+            default=str)
+    json_response = json.loads(response)
+    return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"internal_datasets": json_response}
             )
 
 

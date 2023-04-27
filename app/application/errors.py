@@ -20,3 +20,7 @@ class UserDoesNotExistError(Exception):
 
 class InvalidPasswordError(Exception):
     pass
+
+
+class CSVCREATIONERROR(Exception):
+    pass

@@ -1,8 +1,5 @@
 import os
 from kink import di
-from dotenv import load_dotenv
-
-from dotenv import load_dotenv
 from app.application.service import IBMDashboardService
 from app.infrastructure import GoogleCloudStorage, PostgreSQLUserRepository,\
     BcryptEncrypter, JWTManager, PostgreSQLInternalDatasetRepository

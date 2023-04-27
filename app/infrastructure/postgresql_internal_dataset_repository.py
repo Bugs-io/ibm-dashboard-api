@@ -1,11 +1,12 @@
-from pony.orm import db_session, Database, PrimaryKey, Required, select
+from pony.orm import db_session, Database, PrimaryKey,\
+        Required, select
 from app.application.ports import InternalDatasetRepository
 from app.domain import InternalDataset
 from datetime import datetime
 from typing import List
 from uuid import UUID
-import os
 from dotenv import load_dotenv
+import os
 
 load_dotenv()
 
@@ -16,7 +17,6 @@ db.bind(
         host=os.getenv('DB_HOST'),
         database=os.getenv('DB_NAME')
         )
-
 
 
 class InternalDatasetModel(db.Entity):
@@ -37,7 +37,7 @@ class PostgreSQLInternalDatasetRepository(InternalDatasetRepository):
         internal_dataset_record: InternalDatasetModel
     ) -> InternalDataset:
         return InternalDataset(
-            id=internal_dataset_record.id,
+            id=internal_dataset_record.internal_dataset_id,
             processed_file_path=internal_dataset_record.processed_file_path,
             raw_file_path=internal_dataset_record.raw_file_path,
             is_active=internal_dataset_record.is_active,
@@ -59,18 +59,17 @@ class PostgreSQLInternalDatasetRepository(InternalDatasetRepository):
         internal_dataset_record = InternalDatasetModel[internal_dataset_id]
         if internal_dataset_record:
             return self.to_internal_dataset(internal_dataset_record)
-    """
-    TODO CHECK THIS FUNCTION TYPING 
+
     @db_session
-    def get_all_files(self) -> List[InternalDataset] | []:
-        query = select(internal_dataset for internal_dataset in InternalDatasetModel)
-        all_internal_datasets = []
+    def get_all_files(self) -> List[InternalDataset]:
+        query = select(internal_dataset for internal_dataset in
+                       InternalDatasetModel)
+        all_internal_datasets: List[InternalDataset] = []
         for internal_dataset_record in query:
             internal_dataset = self.to_internal_dataset(
                     internal_dataset_record)
             all_internal_datasets.append(internal_dataset)
         return all_internal_datasets
-    """
 
     @db_session
     def get_active_file(self) -> InternalDataset | None:
@@ -93,6 +92,7 @@ class PostgreSQLInternalDatasetRepository(InternalDatasetRepository):
         self,
         processed_file_path: str
     ) -> InternalDataset | None:
-        internal_dataset_record = InternalDatasetModel.get(processed_file_path=processed_file_path)
+        internal_dataset_record = InternalDatasetModel.get(
+                processed_file_path=processed_file_path)
         if internal_dataset_record:
             return self.to_internal_dataset(internal_dataset_record)
