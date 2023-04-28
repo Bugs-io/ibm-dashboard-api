@@ -3,7 +3,8 @@ from app.application.ports import ObjectStorage, UserRepository,\
         Encrypter, TokenManager, InternalDatasetRepository
 from app.application.errors import InvalidFileTypeError, InvalidEmailError,\
     UserAlreadyExistsError, UserCreationError, UserDoesNotExistError,\
-    InvalidPasswordError, CSVCREATIONERROR
+    InvalidPasswordError, ProcessedFileCreationError, \
+    InternalDatasetCreationError
 from app.application.dtos import DatasetDTO, AuthRequestDTO, AuthResponseDTO
 from app.domain import InternalDataset, User
 from typing import List
@@ -92,7 +93,7 @@ class IBMDashboardService:
         response = requests.post(url, files={"file": file})
 
         if response.status_code != 200:
-            raise CSVCREATIONERROR
+            raise ProcessedFileCreationError
 
         return response.content
 
@@ -101,14 +102,13 @@ class IBMDashboardService:
         return f"{str(uuid4())}-{file_name_without_extension}.csv"
 
     def _generate_raw_file_name(self, file_name: str):
-        return f"{str(uuid4())-{file_name}}"
+        return f"{str(uuid4())}-{file_name}"
 
     def upload_files(self, file_name: str, file_content: bytes):
         processed_file_content = self.get_processed_file_content(
                 file_name,
                 file_content
                 )
-
         processed_file_path = self.upload_processed_internal_dataset(
                 file_name=self._generate_processed_file_name(file_name),
                 file_content=processed_file_content
@@ -126,9 +126,10 @@ class IBMDashboardService:
                 is_active=True,
                 uploaded_at=datetime.utcnow()
                 )
-
-        self.internal_dataset_repository.save(dataset)
-
+        try:
+            self.internal_dataset_repository.save(dataset)
+        except Exception:
+            raise InternalDatasetCreationError
         return DatasetDTO(
                 id=dataset.id,
                 processed_file_path=dataset.processed_file_path,

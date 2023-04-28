@@ -22,5 +22,9 @@ class InvalidPasswordError(Exception):
     pass
 
 
-class CSVCREATIONERROR(Exception):
+class ProcessedFileCreationError(Exception):
+    pass
+
+
+class InternalDatasetCreationError(Exception):
     pass
