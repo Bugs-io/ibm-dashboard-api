@@ -1,13 +1,56 @@
-from fastapi import FastAPI, UploadFile, status, HTTPException, Depends
+from fastapi import FastAPI, UploadFile, status, HTTPException, Depends, Request
 from fastapi.responses import JSONResponse
 from kink import di
+from typing import Optional
+from jwt import InvalidTokenError
 
 from app.application.service import IBMDashboardService
 from app.application.dtos import AuthRequestDTO
 from app.application.errors import UserAlreadyExistsError, InvalidEmailError,\
     UserCreationError, InvalidPasswordError, UserDoesNotExistError
 
+PUBLIC_ROUTES = ["/login", "/signup"]
+
 app = FastAPI()
+
+
+@app.middleware("http")
+async def auth_middleware(
+        request: Request,
+        call_next,
+        service: IBMDashboardService = di[IBMDashboardService]
+):
+    if request.url.path in PUBLIC_ROUTES:
+        response = await call_next(request)
+        return response
+
+    token: Optional[str] = request.headers.get("Authorization").split(" ")[1]
+
+    if token is None:
+        return build_json_failure_response(
+                status.HTTP_401_UNAUTHORIZED,
+                "NOT_AUTHENTICATED"
+                )
+
+    try:
+        payload = service.token_manager.validate_token(token)
+        user_id = payload.get("user_id")
+        user = service.user_repository.get_by_id(user_id)
+
+        request.state.user = user
+    except InvalidTokenError:
+        return build_json_failure_response(
+                status.HTTP_401_UNAUTHORIZED,
+                "INVALID_TOKEN"
+                )
+    except UserDoesNotExistError:
+        return build_json_failure_response(
+                status.HTTP_401_UNAUTHORIZED,
+                "USER_DOES_NOT_EXIST"
+                )
+
+    response = await call_next(request)
+    return response
 
 
 @app.post("/upload-internal-dataset")
@@ -89,6 +132,20 @@ async def login(
                 status.HTTP_500_INTERNAL_SERVER_ERROR,
                 "UNEXPECTED_ERROR"
                 )
+
+
+@app.get("/me")
+async def me(
+        request: Request,
+        service: IBMDashboardService = Depends(lambda: di[IBMDashboardService])
+):
+    user = request.state.user
+    result = service.get_user_by_id(user.id)
+
+    return build_json_success_response(
+            status.HTTP_200_OK,
+            result.dict()
+            )
 
 
 def build_json_success_response(status_code, content) -> JSONResponse:

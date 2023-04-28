@@ -7,7 +7,8 @@ from app.application.ports import ObjectStorage, UserRepository,\
 from app.application.errors import InvalidFileTypeError, InvalidEmailError,\
     UserAlreadyExistsError, UserCreationError, UserDoesNotExistError,\
     InvalidPasswordError
-from app.application.dtos import DatasetDTO, AuthRequestDTO, AuthResponseDTO
+from app.application.dtos import DatasetDTO, AuthRequestDTO, AuthResponseDTO,\
+        UserDTO
 from app.domain import InternalDataset, User
 
 SPREADSHEET_MIME_TYPES = [
@@ -35,6 +36,11 @@ class IBMDashboardService:
     def _is_valid_file(self, file_content: bytes) -> bool:
         file_type = magic.from_buffer(file_content, mime=True)
         return file_type in SPREADSHEET_MIME_TYPES
+
+    def get_user_by_id(self, user_id: str):
+        user = self.user_repository.get_by_id(user_id)
+
+        return UserDTO(id=user_id, email=user.email)
 
     def upload_internal_dataset(self, file_name: str, file_content: bytes):
         if not self._is_valid_file(file_content):
