@@ -8,7 +8,10 @@ from jwt import InvalidTokenError
 from app.application.service import IBMDashboardService
 from app.application.dtos import AuthRequestDTO
 from app.application.errors import UserAlreadyExistsError, InvalidEmailError,\
-    UserCreationError, InvalidPasswordError, UserDoesNotExistError
+    UserCreationError, InvalidPasswordError, UserDoesNotExistError, \
+    ProcessedFileCreationError, InvalidFileTypeError, \
+    InternalDatasetCreationError
+
 import json
 
 PUBLIC_ROUTES = ["/login", "/signup"]
@@ -37,9 +40,9 @@ async def auth_middleware(
     if request.url.path in PUBLIC_ROUTES:
         response = await call_next(request)
         return response
-    token = None
     if request.headers.get("authorization"):
-        token: Optional[str] = request.headers.get("authorization").split(" ")[1]
+        token: Optional[str] = request.headers.get(
+                "authorization").split(" ")[1]
     if token is None:
         return build_json_failure_response(
                 status.HTTP_401_UNAUTHORIZED,
@@ -79,10 +82,30 @@ async def upload_internal_dataset(
             )
 
     content = await file.read()
-    result = service.upload_files(file.filename, content)
-    return JSONResponse(
-            status_code=status.HTTP_201_CREATED,
-            content=result.dict()
+    try:
+        result = service.upload_files(file.filename, content)
+        return JSONResponse(
+                status_code=status.HTTP_201_CREATED,
+                content=result.dict()
+                )
+    except ProcessedFileCreationError:
+        return build_json_failure_response(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "FAILED_PROCESSING_FILE"
+                )
+    except InvalidFileTypeError:
+        return build_json_failure_response(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "INVALID_FILE_TYPE_ERROR"
+               )
+    except InternalDatasetCreationError:
+        return build_json_failure_response(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "INTERNAL_DATASET_CREATION_ERROR"
+                )
+    return build_json_failure_response(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "'UNEXPECTED_ERROR"
             )
 
 
@@ -169,7 +192,8 @@ async def get_all_internal_datasets(
             [internal_dataset.__dict__ for internal_dataset in internal_datasets],
             indent=4,
             sort_keys=True,
-            default=str)
+            default=str
+            )
     json_response = json.loads(response)
     return JSONResponse(
             status_code=status.HTTP_200_OK,
