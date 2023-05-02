@@ -16,19 +16,15 @@ import json
 
 PUBLIC_ROUTES = ["/login", "/signup"]
 
-app = FastAPI()
+origins = [
+    getenv("CLIENT_URL"),
+]
 
+
+app = FastAPI()
 origins = [
     getenv("CLIENT_URL")
 ]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 
 @app.middleware("http")
@@ -40,15 +36,17 @@ async def auth_middleware(
     if request.url.path in PUBLIC_ROUTES:
         response = await call_next(request)
         return response
+
+    token = None
     if request.headers.get("authorization"):
         token: Optional[str] = request.headers.get(
                 "authorization").split(" ")[1]
+
     if token is None:
         return build_json_failure_response(
                 status.HTTP_401_UNAUTHORIZED,
                 "NOT_AUTHENTICATED"
                 )
-
     try:
         payload = service.token_manager.validate_token(token)
         user_id = payload.get("user_id")
@@ -213,3 +211,12 @@ def build_json_failure_response(status_code, error_code) -> JSONResponse:
             status_code=status_code,
             content={"error_code": error_code}
             )
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
