@@ -1,30 +1,7 @@
-import os
-from pony.orm import db_session, Database, PrimaryKey, Required
+from pony.orm import db_session
 from app.application.ports import UserRepository
 from app.domain import User
-from dotenv import load_dotenv
-
-load_dotenv()
-
-# TODO: Move this to a config file that only provides the db connection
-db = Database()
-db.bind(
-        provider=os.getenv('DB_PROVIDER'),
-        user=os.getenv('DB_USER'),
-        password=os.getenv('DB_PASSWORD'),
-        host=os.getenv('DB_HOST'),
-        database=os.getenv('DB_NAME')
-        )
-
-
-class UserModel(db.Entity):
-    _table_ = "users"
-    user_id = PrimaryKey(str)
-    email = Required(str, unique=True)
-    password = Required(str)
-
-
-db.generate_mapping(create_tables=True)
+from .postgresql_db import UserModel
 
 
 class PostgreSQLUserRepository(UserRepository):

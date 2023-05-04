@@ -1,34 +1,9 @@
-from pony.orm import db_session, Database, PrimaryKey,\
-        Required, select
+from pony.orm import db_session, select
 from app.application.ports import InternalDatasetRepository
 from app.domain import InternalDataset
-from datetime import datetime
 from typing import List
 from uuid import UUID
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-
-db = Database()
-db.bind(
-        provider=os.getenv('DB_PROVIDER'),
-        password=os.getenv('DB_PASSWORD'),
-        host=os.getenv('DB_HOST'),
-        database=os.getenv('DB_NAME')
-        )
-
-
-class InternalDatasetModel(db.Entity):
-    _table_ = "internal_datasets"
-    internal_dataset_id = PrimaryKey(str)
-    processed_file_path = Required(str, unique=True)
-    raw_file_path = Required(str, unique=True)
-    is_active = Required(bool)
-    uploaded_at = Required(datetime, default=datetime.utcnow)
-
-
-db.generate_mapping(create_tables=True)
+from .postgresql_db import InternalDatasetModel
 
 
 class PostgreSQLInternalDatasetRepository(InternalDatasetRepository):
