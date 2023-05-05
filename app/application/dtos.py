@@ -10,6 +10,15 @@ class DatasetDTO(BaseModel):
 class UserDTO(BaseModel):
     id: str
     email: str
+    first_name: str
+    last_name: str
+
+
+class SignUpRequestDTO(BaseModel):
+    email: str
+    password: str
+    first_name: str
+    last_name: str
 
 
 class AuthRequestDTO(BaseModel):

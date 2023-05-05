@@ -4,8 +4,9 @@ from app.application.ports import ObjectStorage, UserRepository,\
 from app.application.errors import InvalidFileTypeError, InvalidEmailError,\
     UserAlreadyExistsError, UserCreationError, UserDoesNotExistError,\
     InvalidPasswordError, ProcessedFileCreationError, \
-    InternalDatasetCreationError
-from app.application.dtos import DatasetDTO, AuthRequestDTO, AuthResponseDTO
+    InternalDatasetCreationError, InvalidNameError
+from app.application.dtos import DatasetDTO, AuthRequestDTO, AuthResponseDTO,\
+        SignUpRequestDTO, UserDTO
 from app.domain import InternalDataset, User
 from typing import List
 from dotenv import load_dotenv
@@ -135,9 +136,11 @@ class IBMDashboardService:
                 processed_file_path=dataset.processed_file_path,
                 raw_file_path=dataset.raw_file_path)
 
-    def signup(self, input_dto: AuthRequestDTO) -> AuthResponseDTO:
+    def signup(self, input_dto: SignUpRequestDTO) -> AuthResponseDTO:
         email = input_dto.email
         password = input_dto.password
+        first_name = input_dto.first_name
+        last_name = input_dto.last_name
 
         if EMAIL_DOMAIN not in email:
             raise InvalidEmailError
@@ -145,10 +148,15 @@ class IBMDashboardService:
         if self.user_repository.get_by_email(email):
             raise UserAlreadyExistsError
 
+        if len(first_name) == 0 or len(last_name) == 0:
+            raise InvalidNameError
+
         hashed_password = self.encrypter.encrypt_password(password)
 
         user = User(
                 id=str(uuid4()),
+                first_name=first_name,
+                last_name=last_name,
                 email=email,
                 password=hashed_password
                 )
@@ -176,3 +184,16 @@ class IBMDashboardService:
         token = self.token_manager.generate_token({"user_id": user.id})
 
         return AuthResponseDTO(id=user.id, email=user.email, id_token=token)
+
+    def get_user_by_id(self, user_id: str) -> UserDTO:
+        user = self.user_repository.get_by_id(user_id)
+
+        if not user:
+            raise UserDoesNotExistError
+
+        return UserDTO(
+                id=user.id,
+                first_name=user.first_name,
+                last_name=user.last_name,
+                email=user.email
+                )

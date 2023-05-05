@@ -9,6 +9,8 @@ DB = Database()
 class UserModel(DB.Entity):
     _table_ = "users"
     user_id = PrimaryKey(str)
+    first_name = Required(str)
+    last_name = Required(str)
     email = Required(str, unique=True)
     password = Required(str)
 

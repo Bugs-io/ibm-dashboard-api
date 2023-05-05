@@ -22,6 +22,10 @@ class InvalidPasswordError(Exception):
     pass
 
 
+class InvalidNameError(Exception):
+    pass
+
+
 class ProcessedFileCreationError(Exception):
     pass
 
