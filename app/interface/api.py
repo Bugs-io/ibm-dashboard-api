@@ -1,17 +1,17 @@
 from os import getenv
-from fastapi import FastAPI, UploadFile, status, HTTPException, Depends, Request
+from fastapi import FastAPI, UploadFile, status, HTTPException, Depends,\
+        Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from kink import di
 from typing import Optional
 from jwt import InvalidTokenError
 from app.application.service import IBMDashboardService
-from app.application.dtos import AuthRequestDTO
+from app.application.dtos import AuthRequestDTO, SignUpRequestDTO
 from app.application.errors import UserAlreadyExistsError, InvalidEmailError,\
     UserCreationError, InvalidPasswordError, UserDoesNotExistError, \
     ProcessedFileCreationError, InvalidFileTypeError, \
     InternalDatasetCreationError
-
 import json
 
 PUBLIC_ROUTES = ["/login", "/signup"]
@@ -109,7 +109,7 @@ async def upload_internal_dataset(
 
 @app.post("/signup")
 async def signup(
-        req: AuthRequestDTO,
+        req: SignUpRequestDTO,
         service: IBMDashboardService = Depends(lambda: di[IBMDashboardService])
 ):
     try:
@@ -172,12 +172,21 @@ async def me(
         request: Request,
         service: IBMDashboardService = Depends(lambda: di[IBMDashboardService])
 ):
-    user = request.state.user
-    result = service.get_user_by_id(user.id)
-
-    return build_json_success_response(
-            status.HTTP_200_OK,
-            result.dict()
+    try:
+        user = request.state.user
+        result = service.get_user_by_id(user.id)
+        return build_json_success_response(
+                status.HTTP_200_OK,
+                result.dict()
+                )
+    except UserDoesNotExistError:
+        return build_json_failure_response(
+                status.HTTP_404_NOT_FOUND,
+                "USER_DOES_NOT_EXIST"
+                )
+    return build_json_failure_response(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "UNEXPECTED_ERROR"
             )
 
 
