@@ -8,8 +8,7 @@ from .postgresql_db import InternalDatasetModel
 
 class PostgreSQLInternalDatasetRepository(InternalDatasetRepository):
     def to_internal_dataset(
-        self,
-        internal_dataset_record: InternalDatasetModel
+        self, internal_dataset_record: InternalDatasetModel
     ) -> InternalDataset:
         return InternalDataset(
             id=internal_dataset_record.internal_dataset_id,
@@ -37,12 +36,10 @@ class PostgreSQLInternalDatasetRepository(InternalDatasetRepository):
 
     @db_session
     def get_all_files(self) -> List[InternalDataset]:
-        query = select(internal_dataset for internal_dataset in
-                       InternalDatasetModel)
+        query = select(internal_dataset for internal_dataset in InternalDatasetModel)
         all_internal_datasets: List[InternalDataset] = []
         for internal_dataset_record in query:
-            internal_dataset = self.to_internal_dataset(
-                    internal_dataset_record)
+            internal_dataset = self.to_internal_dataset(internal_dataset_record)
             all_internal_datasets.append(internal_dataset)
         return all_internal_datasets
 
@@ -53,21 +50,25 @@ class PostgreSQLInternalDatasetRepository(InternalDatasetRepository):
             return self.to_internal_dataset(internal_dataset_record)
 
     @db_session
-    def get_by_raw_file_path(
-            self,
-            raw_file_path: str
-    ) -> InternalDataset | None:
-        internal_dataset_record = InternalDatasetModel.get(
-                raw_file_path=raw_file_path)
+    def get_by_raw_file_path(self, raw_file_path: str) -> InternalDataset | None:
+        internal_dataset_record = InternalDatasetModel.get(raw_file_path=raw_file_path)
         if internal_dataset_record:
             return self.to_internal_dataset(internal_dataset_record)
 
     @db_session
     def get_by_processed_file_path(
-        self,
-        processed_file_path: str
+        self, processed_file_path: str
     ) -> InternalDataset | None:
         internal_dataset_record = InternalDatasetModel.get(
-                processed_file_path=processed_file_path)
+            processed_file_path=processed_file_path
+        )
         if internal_dataset_record:
             return self.to_internal_dataset(internal_dataset_record)
+
+    @db_session
+    def update_active_internal_dataset(self):
+        query = select(
+            internal_dataset for internal_dataset in InternalDatasetModel
+        ).order_by(InternalDatasetModel.uploaded_at.desc())
+        for internal_dataset in query:
+            internal_dataset.is_active = False
