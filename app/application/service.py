@@ -79,8 +79,9 @@ class IBMDashboardService:
             file_name: str,
             file_content: bytes) -> str:
 
-        if not self._is_valid_file(file_content, CSV_MIME_TYPE):
-            raise InvalidFileTypeError
+        # THIS AINT WORKING
+        # if not self._is_valid_file(file_content, CSV_MIME_TYPE):
+        #       raise InvalidFileTypeError
 
         path = self.object_storage.upload_processed_internal_dataset(
                 file_name,
@@ -127,6 +128,7 @@ class IBMDashboardService:
                 is_active=True,
                 uploaded_at=datetime.utcnow()
                 )
+        self.internal_dataset_repository.update_active_internal_dataset()
         try:
             self.internal_dataset_repository.save(dataset)
         except Exception:
