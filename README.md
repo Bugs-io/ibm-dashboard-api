@@ -20,4 +20,4 @@ In order to contribute to the project:
 chmod +x ./precommit-hook-setup
 ./precommit-hook-setup
 ```
-2. Every commit to the codebase must pass pylint test successfully. Code must be rated 8 or greater.
+2. Every commit to the codebase must pass pylint test successfully. Code must be rated 8 or greater
