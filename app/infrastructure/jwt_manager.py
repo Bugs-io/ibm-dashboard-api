@@ -1,6 +1,6 @@
-import jwt
 from typing import Dict
 from datetime import datetime, timedelta, timezone
+import jwt
 
 from app.application.ports import TokenManager
 
