@@ -1,18 +1,19 @@
 from os import getenv
+import json
+from typing import Optional
+from jwt import InvalidTokenError
+from kink import di
 from fastapi import FastAPI, UploadFile, status, HTTPException, Depends,\
         Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from kink import di
-from typing import Optional
-from jwt import InvalidTokenError
+
 from app.application.service import IBMDashboardService
 from app.application.dtos import AuthRequestDTO, SignUpRequestDTO
 from app.application.errors import UserAlreadyExistsError, InvalidEmailError,\
     UserCreationError, InvalidPasswordError, UserDoesNotExistError, \
     ProcessedFileCreationError, InvalidFileTypeError, \
     InternalDatasetCreationError
-import json
 
 PUBLIC_ROUTES = ["/login", "/signup"]
 

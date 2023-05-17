@@ -1,4 +1,12 @@
+from os import getenv, path
+from datetime import datetime
+from typing import List
+from uuid import uuid4
 from kink import inject
+from dotenv import load_dotenv
+import magic
+import requests
+
 from app.application.ports import ObjectStorage, UserRepository,\
         Encrypter, TokenManager, InternalDatasetRepository
 from app.application.errors import InvalidFileTypeError, InvalidEmailError,\
@@ -8,13 +16,6 @@ from app.application.errors import InvalidFileTypeError, InvalidEmailError,\
 from app.application.dtos import DatasetDTO, AuthRequestDTO, AuthResponseDTO,\
         SignUpRequestDTO, UserDTO
 from app.domain import InternalDataset, User
-from typing import List
-from dotenv import load_dotenv
-from uuid import uuid4
-from datetime import datetime
-from os import getenv, path
-import magic
-import requests
 
 load_dotenv()
 
@@ -77,22 +78,22 @@ class IBMDashboardService:
     def upload_processed_internal_dataset(
             self,
             file_name: str,
-            file_content: bytes) -> str:
+            file_content: bytes
+            ) -> str:
 
         # THIS AINT WORKING
         # if not self._is_valid_file(file_content, CSV_MIME_TYPE):
         #       raise InvalidFileTypeError
 
-        path = self.object_storage.upload_processed_internal_dataset(
+        return self.object_storage.upload_processed_internal_dataset(
                 file_name,
                 file_content
                 )
-        return path
 
     def get_processed_file_content(self, file_name: str, file_content: bytes):
         file = (file_name, file_content)
         url = ANALYSIS_SERVICE_URL + "/clean-internal-dataset"
-        response = requests.post(url, files={"file": file})
+        response = requests.post(url, files={"file": file}, timeout=5)
 
         if response.status_code != 200:
             raise ProcessedFileCreationError
@@ -131,8 +132,8 @@ class IBMDashboardService:
         self.internal_dataset_repository.update_active_internal_dataset()
         try:
             self.internal_dataset_repository.save(dataset)
-        except Exception:
-            raise InternalDatasetCreationError
+        except Exception as exc:
+            raise InternalDatasetCreationError from exc
         return DatasetDTO(
                 id=dataset.id,
                 processed_file_path=dataset.processed_file_path,
@@ -165,8 +166,8 @@ class IBMDashboardService:
 
         try:
             self.user_repository.save(user)
-        except Exception:
-            raise UserCreationError
+        except Exception as exc:
+            raise UserCreationError from exc
 
         token = self.token_manager.generate_token({"user_id": user.id})
 

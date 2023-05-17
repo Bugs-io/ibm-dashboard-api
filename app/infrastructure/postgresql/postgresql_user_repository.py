@@ -1,4 +1,5 @@
 from pony.orm import db_session
+
 from app.application.ports import UserRepository
 from app.domain import User
 from .postgresql_db import UserModel
@@ -29,13 +30,13 @@ class PostgreSQLUserRepository(UserRepository):
     @db_session
     def get_by_id(self, user_id: str) -> User | None:
         user_record = UserModel[user_id]
-
         if user_record:
             return self._to_user(user_record)
+        return None
 
     @db_session
     def get_by_email(self, email: str) -> User | None:
         user_record = UserModel.get(email=email)
-
         if user_record:
             return self._to_user(user_record)
+        return None

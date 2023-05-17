@@ -1,5 +1,6 @@
-from app.application.ports import ObjectStorage
 from google.cloud import storage
+
+from app.application.ports import ObjectStorage
 
 
 class GoogleCloudStorage(ObjectStorage):

@@ -1,8 +1,9 @@
-from pony.orm import db_session, select
-from app.application.ports import InternalDatasetRepository
-from app.domain import InternalDataset
 from typing import List
 from uuid import UUID
+from pony.orm import db_session, select
+
+from app.application.ports import InternalDatasetRepository
+from app.domain import InternalDataset
 from .postgresql_db import InternalDatasetModel
 
 
@@ -33,6 +34,7 @@ class PostgreSQLInternalDatasetRepository(InternalDatasetRepository):
         internal_dataset_record = InternalDatasetModel[internal_dataset_id]
         if internal_dataset_record:
             return self.to_internal_dataset(internal_dataset_record)
+        return None
 
     @db_session
     def get_all_files(self) -> List[InternalDataset]:
@@ -48,12 +50,14 @@ class PostgreSQLInternalDatasetRepository(InternalDatasetRepository):
         internal_dataset_record = InternalDatasetModel.get(is_active=True)
         if internal_dataset_record:
             return self.to_internal_dataset(internal_dataset_record)
+        return None
 
     @db_session
     def get_by_raw_file_path(self, raw_file_path: str) -> InternalDataset | None:
         internal_dataset_record = InternalDatasetModel.get(raw_file_path=raw_file_path)
         if internal_dataset_record:
             return self.to_internal_dataset(internal_dataset_record)
+        return None
 
     @db_session
     def get_by_processed_file_path(
@@ -64,6 +68,7 @@ class PostgreSQLInternalDatasetRepository(InternalDatasetRepository):
         )
         if internal_dataset_record:
             return self.to_internal_dataset(internal_dataset_record)
+        return None
 
     @db_session
     def update_active_internal_dataset(self):

@@ -1,7 +1,7 @@
 import os
-from pony.orm import Database, PrimaryKey, Required
-from dotenv import load_dotenv
 from datetime import datetime
+from dotenv import load_dotenv
+from pony.orm import Database, PrimaryKey, Required
 
 DB = Database()
 
