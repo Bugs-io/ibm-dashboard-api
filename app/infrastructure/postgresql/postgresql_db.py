@@ -1,7 +1,7 @@
-import os
 from datetime import datetime
-from dotenv import load_dotenv
 from pony.orm import Database, PrimaryKey, Required
+
+from app.config import Config
 
 DB = Database()
 
@@ -26,17 +26,14 @@ class InternalDatasetModel(DB.Entity):
 
 def connect_to_db():
     DB.bind(
-        provider=os.getenv('DB_PROVIDER'),
-        user=os.getenv('DB_USER'),
-        password=os.getenv('DB_PASSWORD'),
-        host=os.getenv('DB_HOST'),
-        database=os.getenv('DB_NAME')
+        provider=Config.DB_PROVIDER,
+        user=Config.DB_USER,
+        password=Config.DB_PASSWORD,
+        host=Config.DB_HOST,
+        database=Config.DB_NAME,
         )
 
 
 def init_db():
-    load_dotenv()
-
     connect_to_db()
-
     DB.generate_mapping(create_tables=True)
