@@ -1,5 +1,6 @@
-import os
 from kink import di
+
+from app.config import Config
 from app.application.service import IBMDashboardService
 from app.infrastructure import GoogleCloudStorage, PostgreSQLUserRepository,\
     BcryptEncrypter, JWTManager, PostgreSQLInternalDatasetRepository
@@ -12,11 +13,11 @@ def bootstrap_di():
             encrypter=BcryptEncrypter(),
             internal_dataset_repository=PostgreSQLInternalDatasetRepository(),
             object_storage=GoogleCloudStorage(
-                bucket_name=os.getenv('BUCKET_NAME')
+                bucket_name=Config.BUCKET_NAME
                 ),
             token_manager=JWTManager(
-                algorithm=os.getenv('JWT_ALGORITHM'),
-                secret_key=os.getenv('JWT_SECRET_KEY'),
+                algorithm=Config.JWT_ALGORITHM,
+                secret_key=Config.JWT_SECRET,
                 expiration_delta=MILLISECONDS_IN_A_DAY
                 ),
             user_repository=PostgreSQLUserRepository(),

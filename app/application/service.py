@@ -1,4 +1,4 @@
-from os import getenv, path
+from os import path
 from datetime import datetime
 from typing import List
 from uuid import uuid4
@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 import magic
 import requests
 
+from app.config import Config
 from app.application.ports import ObjectStorage, UserRepository,\
         Encrypter, TokenManager, InternalDatasetRepository
 from app.application.errors import InvalidFileTypeError, InvalidEmailError,\
@@ -18,6 +19,7 @@ from app.application.dtos import DatasetDTO, AuthRequestDTO, AuthResponseDTO,\
 from app.domain import InternalDataset, User
 
 load_dotenv()
+Config.ANALYSIS_SERVICE_URL
 
 SPREADSHEET_MIME_TYPES = [
         "application/vnd.ms-excel",
@@ -28,7 +30,7 @@ CSV_MIME_TYPE = ["text/csv"]
 
 EMAIL_DOMAIN = "@ibm.com"
 
-ANALYSIS_SERVICE_URL = getenv("ANALYSIS_SERVICE_URL")
+ANALYSIS_SERVICE_URL = Config.ANALYSIS_SERVICE_URL
 
 
 @inject
