@@ -3,7 +3,6 @@ from datetime import datetime
 from typing import List
 from uuid import uuid4
 from kink import inject
-from dotenv import load_dotenv
 import magic
 import requests
 
@@ -18,9 +17,6 @@ from app.application.dtos import DatasetDTO, AuthRequestDTO, AuthResponseDTO,\
         SignUpRequestDTO, UserDTO
 from app.domain import InternalDataset, User
 
-load_dotenv()
-Config.ANALYSIS_SERVICE_URL
-
 SPREADSHEET_MIME_TYPES = [
         "application/vnd.ms-excel",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -29,8 +25,6 @@ SPREADSHEET_MIME_TYPES = [
 CSV_MIME_TYPE = ["text/csv"]
 
 EMAIL_DOMAIN = "@ibm.com"
-
-ANALYSIS_SERVICE_URL = Config.ANALYSIS_SERVICE_URL
 
 
 @inject
@@ -94,7 +88,7 @@ class IBMDashboardService:
 
     def get_processed_file_content(self, file_name: str, file_content: bytes):
         file = (file_name, file_content)
-        url = ANALYSIS_SERVICE_URL + "/clean-internal-dataset"
+        url = Config.ANALYSIS_SERVICE_URL + "/clean-internal-dataset"
         response = requests.post(url, files={"file": file}, timeout=5)
 
         if response.status_code != 200:
