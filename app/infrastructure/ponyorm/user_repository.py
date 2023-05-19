@@ -1,11 +1,20 @@
-from pony.orm import db_session
+from pony.orm import db_session, PrimaryKey, Required
 
 from app.application.ports import UserRepository
 from app.domain import User
-from .postgresql_db import UserModel
+from .database import db
 
 
-class PostgreSQLUserRepository(UserRepository):
+class UserModel(db.Entity):
+    _table_ = "users"
+    user_id = PrimaryKey(str)
+    first_name = Required(str)
+    last_name = Required(str)
+    email = Required(str, unique=True)
+    password = Required(str)
+
+
+class PonyORMUserRepository(UserRepository):
     def _to_user(
             self,
             user_record: UserModel

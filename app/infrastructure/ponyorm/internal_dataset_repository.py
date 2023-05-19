@@ -1,13 +1,23 @@
+from datetime import datetime
 from typing import List
 from uuid import UUID
-from pony.orm import db_session, select
+from pony.orm import db_session, select, PrimaryKey, Required
 
 from app.application.ports import InternalDatasetRepository
 from app.domain import InternalDataset
-from .postgresql_db import InternalDatasetModel
+from .database import db
 
 
-class PostgreSQLInternalDatasetRepository(InternalDatasetRepository):
+class InternalDatasetModel(db.Entity):
+    _table_ = "internal_datasets"
+    internal_dataset_id = PrimaryKey(str)
+    processed_file_path = Required(str, unique=True)
+    raw_file_path = Required(str, unique=True)
+    is_active = Required(bool)
+    uploaded_at = Required(datetime, default=datetime.utcnow)
+
+
+class PonyORMInternalDatasetRepository(InternalDatasetRepository):
     def to_internal_dataset(
         self, internal_dataset_record: InternalDatasetModel
     ) -> InternalDataset:

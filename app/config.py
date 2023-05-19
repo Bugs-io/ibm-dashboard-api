@@ -16,3 +16,4 @@ class Config:
     DB_NAME = os.getenv("DB_NAME")
     DB_FILENAME = os.getenv("DB_FILENAME")
     DB_PROVIDER = os.getenv("DB_PROVIDER")
+    TESTING = True
