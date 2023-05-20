@@ -28,3 +28,6 @@ class InternalDatasetRepository:
 
     def get_all_files(self) -> List[InternalDataset]:
         pass
+
+    def update_active_internal_dataset(self):
+        pass

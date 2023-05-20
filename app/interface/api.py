@@ -1,13 +1,12 @@
-from os import getenv
 import json
 from typing import Optional
 from jwt import InvalidTokenError
 from kink import di
-from fastapi import FastAPI, UploadFile, status, HTTPException, Depends,\
-        Request
+from fastapi import FastAPI, UploadFile, status, Depends, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.config import Config
 from app.application.service import IBMDashboardService
 from app.application.dtos import AuthRequestDTO, SignUpRequestDTO
 from app.application.errors import UserAlreadyExistsError, InvalidEmailError,\
@@ -17,15 +16,7 @@ from app.application.errors import UserAlreadyExistsError, InvalidEmailError,\
 
 PUBLIC_ROUTES = ["/login", "/signup"]
 
-origins = [
-    getenv("CLIENT_URL"),
-]
-
-
 app = FastAPI()
-origins = [
-    getenv("CLIENT_URL")
-]
 
 
 @app.middleware("http")
@@ -75,15 +66,16 @@ async def upload_internal_dataset(
         service: IBMDashboardService = Depends(lambda: di[IBMDashboardService])
 ):
     if not file:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No file was uploaded"
-            )
+        return build_json_failure_response(
+                status.HTTP_400_BAD_REQUEST,
+                "NO_FILE_UPLOADED"
+                )
 
     content = await file.read()
+
     try:
-        result = service.upload_files(file.filename, content)
-        return JSONResponse(
+        result = service.upload_internal_dataset(file.filename, content)
+        return build_json_success_response(
                 status_code=status.HTTP_201_CREATED,
                 content=result.dict()
                 )
@@ -203,9 +195,10 @@ async def get_all_internal_datasets(
             default=str
             )
     json_response = json.loads(response)
-    return JSONResponse(
-            status_code=status.HTTP_200_OK,
-            content={"internal_datasets": json_response}
+
+    return build_json_success_response(
+            status.HTTP_200_OK,
+            {"internal_datasets": json_response}
             )
 
 
@@ -225,7 +218,7 @@ def build_json_failure_response(status_code, error_code) -> JSONResponse:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=[Config.CLIENT_URL],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

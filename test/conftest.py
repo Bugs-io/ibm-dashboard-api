@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from app.interface.api import app
 from app.infrastructure.ponyorm.database import db
 
+
 TEST_USER = {
         "first_name": "john",
         "last_name": "doe",
@@ -20,15 +21,15 @@ def client():
         yield client
 
 
-@pytest.fixture(scope='session')
-def test_db(client):
+@pytest.fixture(scope='session', autouse=True)
+def setup_test_db(client):
     temp_file = tempfile.NamedTemporaryFile(suffix='.sqlite', delete=False)
     temp_file.close()
 
     db.bind(provider='sqlite', filename=temp_file.name, create_db=True)
     db.generate_mapping(create_tables=True)
 
-    seed_database(client)
+    seed_test_database(client)
 
     yield db
 
@@ -38,7 +39,7 @@ def test_db(client):
     os.remove(temp_file.name)
 
 
-def seed_database(client):
+def seed_test_database(client):
     client.post("/signup", json=TEST_USER)
 
 
