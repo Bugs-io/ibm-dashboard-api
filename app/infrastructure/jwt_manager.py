@@ -6,7 +6,7 @@ from app.application.ports import TokenManager
 
 
 class JWTManager(TokenManager):
-    def __init__(self, algorithm: str, secret_key: str, expiration_delta: str):
+    def __init__(self, algorithm: str, secret_key: str, expiration_delta: int):
         self.algorithm = algorithm
         self.secret_key = secret_key
         self.expiration_delta = expiration_delta

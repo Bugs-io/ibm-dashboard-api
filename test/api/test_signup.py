@@ -1,7 +1,7 @@
 from pytest_schema import schema
 
 
-def test_signup(client, test_db):
+def test_signup(client):
     response = client.post(
             "/signup",
             json={
@@ -20,7 +20,7 @@ def test_signup(client, test_db):
         })
 
 
-def test_signup_raises_error_when_email_is_invalid(client, test_db):
+def test_signup_raises_error_when_email_is_invalid(client):
     response = client.post(
             "/signup",
             json={
@@ -37,7 +37,7 @@ def test_signup_raises_error_when_email_is_invalid(client, test_db):
         })
 
 
-def test_signup_raises_error_when_user_already_exists(client, test_db):
+def test_signup_raises_error_when_user_already_exists(client):
     response = client.post(
             "/signup",
             json={

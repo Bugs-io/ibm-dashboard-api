@@ -82,8 +82,7 @@ class PonyORMInternalDatasetRepository(InternalDatasetRepository):
 
     @db_session
     def update_active_internal_dataset(self):
-        query = select(
-            internal_dataset for internal_dataset in InternalDatasetModel
-        ).order_by(InternalDatasetModel.uploaded_at.desc())
-        for internal_dataset in query:
-            internal_dataset.is_active = False
+        active_internal_dataset = InternalDatasetModel.get(is_active=True)
+
+        if active_internal_dataset:
+            active_internal_dataset.is_active = False

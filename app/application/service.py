@@ -2,17 +2,15 @@ from os import path
 from datetime import datetime
 from typing import List
 from uuid import uuid4
-from kink import inject
+from kink import inject, di
 import magic
-import requests
 
-from app.config import Config
 from app.application.ports import ObjectStorage, UserRepository,\
-        Encrypter, TokenManager, InternalDatasetRepository
+        Encrypter, TokenManager, InternalDatasetRepository,\
+        DataAnalysisGateway
 from app.application.errors import InvalidFileTypeError, InvalidEmailError,\
     UserAlreadyExistsError, UserCreationError, UserDoesNotExistError,\
-    InvalidPasswordError, ProcessedFileCreationError, \
-    InternalDatasetCreationError, InvalidNameError
+    InvalidPasswordError, InternalDatasetCreationError, InvalidNameError
 from app.application.dtos import DatasetDTO, AuthRequestDTO, AuthResponseDTO,\
         SignUpRequestDTO, UserDTO
 from app.domain import InternalDataset, User
@@ -35,29 +33,24 @@ class IBMDashboardService:
             object_storage: ObjectStorage,
             token_manager: TokenManager,
             user_repository: UserRepository,
-            internal_dataset_repository: InternalDatasetRepository
+            internal_dataset_repository: InternalDatasetRepository,
+            data_analysis_gateway: DataAnalysisGateway
             ):
         self.encrypter = encrypter
         self.object_storage = object_storage
         self.token_manager = token_manager
         self.user_repository = user_repository
         self.internal_dataset_repository = internal_dataset_repository
-
-    def _is_valid_file(
-            self,
-            file_content: bytes,
-            file_types: List[str]
-            ) -> bool:
-        file_type = magic.from_buffer(file_content, mime=True)
-        return file_type in file_types
+        self.data_analysis_gateway = data_analysis_gateway
 
     def get_all_internal_datasets(self):
         internal_datasets = (
                 self.internal_dataset_repository
-                    .get_all_files())
+                    .get_all_files()
+                    )
         return internal_datasets
 
-    def upload_raw_internal_dataset(
+    def _upload_raw_internal_dataset(
             self,
             file_name: str,
             file_content: bytes
@@ -65,13 +58,12 @@ class IBMDashboardService:
         if not self._is_valid_file(file_content, SPREADSHEET_MIME_TYPES):
             raise InvalidFileTypeError
 
-        raw_file_path = self.object_storage.upload_raw_internal_dataset(
+        return self.object_storage.upload_raw_internal_dataset(
                 file_name,
                 file_content
                 )
-        return raw_file_path
 
-    def upload_processed_internal_dataset(
+    def _upload_processed_internal_dataset(
             self,
             file_name: str,
             file_content: bytes
@@ -86,47 +78,38 @@ class IBMDashboardService:
                 file_content
                 )
 
-    def get_processed_file_content(self, file_name: str, file_content: bytes):
-        file = (file_name, file_content)
-        url = Config.ANALYSIS_SERVICE_URL + "/clean-internal-dataset"
-        response = requests.post(url, files={"file": file}, timeout=5)
+    def upload_internal_dataset(self, file_name: str, file_content: bytes):
+        file_id = self._get_uuid_as_str()
+        file_name, file_extension = path.splitext(file_name)
 
-        if response.status_code != 200:
-            raise ProcessedFileCreationError
+        raw_file_name = f"{file_id}-{file_name}{file_extension}"
+        processed_file_name = f"{file_id}-{file_name}.csv"
 
-        return response.content
-
-    def _generate_processed_file_name(self, file_name: str):
-        file_name_without_extension = path.splitext(file_name)[0]
-        return f"{str(uuid4())}-{file_name_without_extension}.csv"
-
-    def _generate_raw_file_name(self, file_name: str):
-        return f"{str(uuid4())}-{file_name}"
-
-    def upload_files(self, file_name: str, file_content: bytes):
-        processed_file_content = self.get_processed_file_content(
+        processed_file_content = self.data_analysis_gateway.clean_internal_dataset(
                 file_name,
                 file_content
                 )
-        processed_file_path = self.upload_processed_internal_dataset(
-                file_name=self._generate_processed_file_name(file_name),
+        processed_file_path = self._upload_processed_internal_dataset(
+                file_name=processed_file_name,
                 file_content=processed_file_content
                 )
 
-        raw_file_path = self.upload_raw_internal_dataset(
-                file_name=self._generate_raw_file_name(file_name),
+        raw_file_path = self._upload_raw_internal_dataset(
+                file_name=raw_file_name,
                 file_content=file_content
                 )
 
+        dataset_id = self._get_uuid_as_str()
         dataset = InternalDataset(
-                id=str(uuid4()),
+                id=dataset_id,
                 processed_file_path=processed_file_path,
                 raw_file_path=raw_file_path,
                 is_active=True,
                 uploaded_at=datetime.utcnow()
                 )
-        self.internal_dataset_repository.update_active_internal_dataset()
+
         try:
+            self.internal_dataset_repository.update_active_internal_dataset()
             self.internal_dataset_repository.save(dataset)
         except Exception as exc:
             raise InternalDatasetCreationError from exc
@@ -196,3 +179,14 @@ class IBMDashboardService:
                 last_name=user.last_name,
                 email=user.email
                 )
+
+    def _is_valid_file(
+            self,
+            file_content: bytes,
+            file_types: List[str]
+            ) -> bool:
+        file_type = magic.from_buffer(file_content, mime=True)
+        return file_type in file_types
+
+    def _get_uuid_as_str(self) -> str:
+        return str(uuid4())
