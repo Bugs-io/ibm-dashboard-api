@@ -7,3 +7,9 @@ class ObjectStorage:
             file_name: str,
             file_content: bytes):
         pass
+
+    def download_internal_dataset_from_url(
+            self,
+            url: str,
+            destination_file_path: str):
+        pass
