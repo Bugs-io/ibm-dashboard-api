@@ -32,3 +32,15 @@ class ProcessedFileCreationError(Exception):
 
 class InternalDatasetCreationError(Exception):
     pass
+
+
+class DatasetNotAvailable(Exception):
+    pass
+
+
+class DatasetNotFound(Exception):
+    pass
+
+
+class DataAnalysisServiceError(Exception):
+    pass

@@ -1,8 +1,10 @@
-from os import path
+from os import path, remove
 from datetime import datetime
+from io import BytesIO
 from typing import List
+from tempfile import NamedTemporaryFile
 from uuid import uuid4
-from kink import inject, di
+from kink import inject
 import magic
 
 from app.application.ports import ObjectStorage, UserRepository,\
@@ -10,7 +12,8 @@ from app.application.ports import ObjectStorage, UserRepository,\
         DataAnalysisGateway
 from app.application.errors import InvalidFileTypeError, InvalidEmailError,\
     UserAlreadyExistsError, UserCreationError, UserDoesNotExistError,\
-    InvalidPasswordError, InternalDatasetCreationError, InvalidNameError
+    InvalidPasswordError, InternalDatasetCreationError, InvalidNameError,\
+    DatasetNotFound, DatasetNotAvailable
 from app.application.dtos import DatasetDTO, AuthRequestDTO, AuthResponseDTO,\
         SignUpRequestDTO, UserDTO
 from app.domain import InternalDataset, User
@@ -50,6 +53,45 @@ class IBMDashboardService:
                     )
         return internal_datasets
 
+    def _convert_file_to_bytes(self, file_content) -> bytes:
+        byte_stream = BytesIO()
+        byte_stream.write(file_content.encode('utf-8'))
+        return byte_stream.getvalue()
+
+    def _get_active_internal_dataset(self):
+        active_internal_dataset = (self.internal_dataset_repository.
+                                   get_active_file())
+        if not active_internal_dataset:
+            raise DatasetNotAvailable
+
+        tempfile = NamedTemporaryFile(delete=False)
+        tempfile_path = tempfile.name
+
+        blob_path = active_internal_dataset.processed_file_path
+        try:
+            self.object_storage.download_internal_dataset_from_url(
+                    blob_path,
+                    tempfile_path
+                    )
+        except Exception as exc:
+            raise DatasetNotFound from exc
+
+        with open(tempfile_path, 'r') as f:
+            csv_content = f.read()
+
+        byte_content = self._convert_file_to_bytes(csv_content)
+
+        return (tempfile_path, byte_content)
+
+    def _get_example_graph(self):
+        file_name, file_content = self._get_active_internal_dataset()
+        result = self.data_analysis_gateway.test_graph(
+                file_name,
+                file_content
+                )
+        remove(file_name)
+        return result
+
     def _upload_raw_internal_dataset(
             self,
             file_name: str,
@@ -85,10 +127,11 @@ class IBMDashboardService:
         raw_file_name = f"{file_id}-{file_name}{file_extension}"
         processed_file_name = f"{file_id}-{file_name}.csv"
 
-        processed_file_content = self.data_analysis_gateway.clean_internal_dataset(
-                file_name,
-                file_content
-                )
+        processed_file_content = (self.data_analysis_gateway
+                                  .clean_internal_dataset(
+                                      file_name,
+                                      file_content)
+                                  )
         processed_file_path = self._upload_processed_internal_dataset(
                 file_name=processed_file_name,
                 file_content=processed_file_content
