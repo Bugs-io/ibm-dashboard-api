@@ -8,6 +8,8 @@ class Config:
     ANALYSIS_SERVICE_URL = os.getenv("ANALYSIS_SERVICE_URL")
     BUCKET_NAME = os.getenv("BUCKET_NAME")
     CLIENT_URL = os.getenv("CLIENT_URL")
+    CLIENT_URL_LOCAL = os.getenv("CLIENT_URL_LOCAL")
+    CLIENT_URL_REGEX = os.getenv("CLIENT_URL_REGEX")
     JWT_ALGORITHM = os.getenv("JWT_ALGORITHM")
     JWT_SECRET = os.getenv("JWT_SECRET")
     DB_PROVIDER = os.getenv("DB_PROVIDER")
