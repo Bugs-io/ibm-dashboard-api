@@ -226,10 +226,11 @@ def build_json_failure_response(status_code, error_code) -> JSONResponse:
             content={"error_code": error_code}
             )
 
-
+origins = [Config.CLIENT_URL, Config.CLIENT_URL_LOCAL]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[Config.CLIENT_URL],
+    allow_origin_regex=Config.CLIENT_URL_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
