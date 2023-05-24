@@ -28,3 +28,18 @@ class GoogleCloudStorage(ObjectStorage):
         directory = "processed_internal_datasets/"
         file_path = directory + file_name
         return self.upload_file(file_path, file_content)
+
+    def _extract_blob_name_from_url(self, url: str):
+        parts = url.split("/")
+        blob_name = "/".join(parts[4:])
+        return blob_name
+
+    def download_internal_dataset_from_url(
+            self,
+            url: str,
+            destination_file_path: bytes):
+        blob_name = self._extract_blob_name_from_url(url)
+        bucket = self._get_bucket()
+        blob = bucket.blob(blob_name)
+        blob.download_to_filename(destination_file_path)
+        return destination_file_path
