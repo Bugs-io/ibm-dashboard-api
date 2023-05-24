@@ -60,6 +60,17 @@ async def auth_middleware(
     return response
 
 
+@app.get("/example-graph")
+async def get_internal_dataset(
+        service: IBMDashboardService = Depends(lambda: di[IBMDashboardService])
+        ):
+    result = service._get_example_graph()
+    return build_json_success_response(
+            status.HTTP_200_OK,
+            result
+            )
+
+
 @app.post("/upload-internal-dataset")
 async def upload_internal_dataset(
         file: UploadFile | None = None,
@@ -189,7 +200,7 @@ async def get_all_internal_datasets(
 ):
     internal_datasets = service.get_all_internal_datasets()
     response = json.dumps(
-            [internal_dataset.__dict__ for internal_dataset in internal_datasets],
+            [dataset.__dict__ for dataset in internal_datasets],
             indent=4,
             sort_keys=True,
             default=str
