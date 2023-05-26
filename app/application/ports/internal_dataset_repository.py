@@ -23,7 +23,7 @@ class InternalDatasetRepository:
     ) -> InternalDataset:
         pass
 
-    def get_active_file(self) -> InternalDataset | None:
+    def get_active_dataset(self) -> InternalDataset | None:
         pass
 
     def get_all_files(self) -> List[InternalDataset]:

@@ -56,7 +56,7 @@ class PonyORMInternalDatasetRepository(InternalDatasetRepository):
         return all_internal_datasets
 
     @db_session
-    def get_active_file(self) -> InternalDataset | None:
+    def get_active_dataset(self) -> InternalDataset | None:
         internal_dataset_record = InternalDatasetModel.get(is_active=True)
         if internal_dataset_record:
             return self.to_internal_dataset(internal_dataset_record)
