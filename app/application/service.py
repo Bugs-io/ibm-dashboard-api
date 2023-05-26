@@ -16,7 +16,7 @@ from app.application.errors import InvalidFileTypeError, InvalidEmailError,\
     DatasetNotFound, DatasetNotAvailable
 from app.application.dtos import DatasetDTO, AuthRequestDTO, AuthResponseDTO,\
         SignUpRequestDTO, UserDTO
-from app.domain import InternalDataset, User
+from app.domain import InternalDataset, User, File
 
 SPREADSHEET_MIME_TYPES = [
         "application/vnd.ms-excel",
@@ -47,10 +47,7 @@ class IBMDashboardService:
         self.data_analysis_gateway = data_analysis_gateway
 
     def get_all_internal_datasets(self):
-        internal_datasets = (
-                self.internal_dataset_repository
-                    .get_all_files()
-                    )
+        internal_datasets = self.internal_dataset_repository.get_all_files()
         return internal_datasets
 
     def _convert_file_to_bytes(self, file_content) -> bytes:
@@ -58,9 +55,9 @@ class IBMDashboardService:
         byte_stream.write(file_content.encode('utf-8'))
         return byte_stream.getvalue()
 
-    def _get_active_internal_dataset(self):
-        active_internal_dataset = (self.internal_dataset_repository.
-                                   get_active_file())
+    def _get_active_internal_dataset(self) -> File:
+        active_internal_dataset = self.internal_dataset_repository.get_active_dataset()
+
         if not active_internal_dataset:
             raise DatasetNotAvailable
 
@@ -68,6 +65,7 @@ class IBMDashboardService:
         tempfile_path = tempfile.name
 
         blob_path = active_internal_dataset.processed_file_path
+
         try:
             self.object_storage.download_internal_dataset_from_url(
                     blob_path,
@@ -81,22 +79,9 @@ class IBMDashboardService:
 
         byte_content = self._convert_file_to_bytes(csv_content)
 
-        return (tempfile_path, byte_content)
+        return File(tempfile_path, byte_content)
 
-    def _get_example_graph(self):
-        file_name, file_content = self._get_active_internal_dataset()
-        result = self.data_analysis_gateway.test_graph(
-                file_name,
-                file_content
-                )
-        remove(file_name)
-        return result
-
-    def _upload_raw_internal_dataset(
-            self,
-            file_name: str,
-            file_content: bytes
-            ) -> str:
+    def _upload_raw_internal_dataset(self, file_name: str, file_content: bytes) -> str:
         if not self._is_valid_file(file_content, SPREADSHEET_MIME_TYPES):
             raise InvalidFileTypeError
 
@@ -105,16 +90,7 @@ class IBMDashboardService:
                 file_content
                 )
 
-    def _upload_processed_internal_dataset(
-            self,
-            file_name: str,
-            file_content: bytes
-            ) -> str:
-
-        # THIS AINT WORKING
-        # if not self._is_valid_file(file_content, CSV_MIME_TYPE):
-        #       raise InvalidFileTypeError
-
+    def _upload_processed_internal_dataset(self, file_name: str, file_content: bytes) -> str:
         return self.object_storage.upload_processed_internal_dataset(
                 file_name,
                 file_content
@@ -127,11 +103,9 @@ class IBMDashboardService:
         raw_file_name = f"{file_id}-{file_name}{file_extension}"
         processed_file_name = f"{file_id}-{file_name}.csv"
 
-        processed_file_content = (self.data_analysis_gateway
-                                  .clean_internal_dataset(
-                                      file_name,
-                                      file_content)
-                                  )
+        processed_file_content = self.data_analysis_gateway.clean_internal_dataset(
+                dataset=File(file_name, file_content)
+                )
         processed_file_path = self._upload_processed_internal_dataset(
                 file_name=processed_file_name,
                 file_content=processed_file_content
@@ -223,6 +197,20 @@ class IBMDashboardService:
                 email=user.email
                 )
 
+    def get_most_attended_certifications(self, time_frame: str, limit: int):
+        active_dataset = self._get_active_internal_dataset()
+        since_years = time_frame_to_years(time_frame)
+
+        result = self.data_analysis_gateway.get_most_attended_certifications(
+                active_dataset,
+                since_years,
+                limit
+                )
+
+        remove(active_dataset.name)
+
+        return result
+
     def _is_valid_file(
             self,
             file_content: bytes,
@@ -233,3 +221,15 @@ class IBMDashboardService:
 
     def _get_uuid_as_str(self) -> str:
         return str(uuid4())
+
+
+def time_frame_to_years(time_frame: str) -> int | None:
+    print(time_frame)
+    years = {
+            "last_year": 1,
+            "last_5_years": 5,
+            "last_10_years": 10,
+            "all_time": 100
+            }
+
+    return years.get(time_frame)
