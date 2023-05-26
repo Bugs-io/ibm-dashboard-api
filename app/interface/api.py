@@ -60,17 +60,6 @@ async def auth_middleware(
     return response
 
 
-@app.get("/example-graph")
-async def get_internal_dataset(
-        service: IBMDashboardService = Depends(lambda: di[IBMDashboardService])
-        ):
-    result = service._get_example_graph()
-    return build_json_success_response(
-            status.HTTP_200_OK,
-            result
-            )
-
-
 @app.post("/upload-internal-dataset")
 async def upload_internal_dataset(
         file: UploadFile | None = None,
@@ -194,22 +183,17 @@ async def me(
             )
 
 
-@app.get("/get_all_internal_datasets")
-async def get_all_internal_datasets(
+@app.get("/graphs/most-attended-certifications")
+async def get_most_attended_certifications(
+        limit: int,
+        target_period: str,
         service: IBMDashboardService = Depends(lambda: di[IBMDashboardService])
 ):
-    internal_datasets = service.get_all_internal_datasets()
-    response = json.dumps(
-            [dataset.__dict__ for dataset in internal_datasets],
-            indent=4,
-            sort_keys=True,
-            default=str
-            )
-    json_response = json.loads(response)
+    response = service.get_most_attended_certifications(target_period, limit)
 
     return build_json_success_response(
             status.HTTP_200_OK,
-            {"internal_datasets": json_response}
+            response
             )
 
 
@@ -226,10 +210,11 @@ def build_json_failure_response(status_code, error_code) -> JSONResponse:
             content={"error_code": error_code}
             )
 
-origins = [Config.CLIENT_URL, Config.CLIENT_URL_LOCAL]
+
+allowed_origins = [Config.CLIENT_URL, Config.CLIENT_URL_LOCAL]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[Config.CLIENT_URL],
+    allow_origins=allowed_origins,
     allow_origin_regex=Config.CLIENT_URL_REGEX,
     allow_credentials=True,
     allow_methods=["*"],

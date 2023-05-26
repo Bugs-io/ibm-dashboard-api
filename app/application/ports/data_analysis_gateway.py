@@ -1,9 +1,10 @@
+from app.domain.file import File
+
+
 class DataAnalysisGateway:
-    def clean_internal_dataset(
-            self,
-            file_name: str,
-            file_content: bytes) -> bytes:
+    def clean_internal_dataset(self, dataset_file: File) -> bytes:
         return
 
-    def test_graph(self, file_name: str, file_content: bytes):
+    def get_most_attended_certifications(self, dataset_file: File, since_years: int, limit: int):
         return
+
