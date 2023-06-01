@@ -63,6 +63,8 @@ jobs:
             DB_PROVIDER=${{ secrets.DB_PROVIDER }}
             DB_HOST=${{ secrets.DB_HOST }}
             DB_NAME=${{ secrets.DB_NAME }}
+            URL_CLIENT=${{ secrets.URL_CLIENT }}
+            URL_CLIENT_REGEX=${{ secrets.URL_CLIENT_REGEX }}
           flags: '--allow-unauthenticated --vpc-connector=${{ secrets.VPC_CONNECTOR }}'
         continue-on-error: true 
 
