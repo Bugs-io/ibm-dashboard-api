@@ -1,3 +1,3 @@
-from .database import init_db
+from .DatabaseSingleton import DatabaseSingleton
 from .internal_dataset_repository import PonyORMInternalDatasetRepository
 from .user_repository import PonyORMUserRepository

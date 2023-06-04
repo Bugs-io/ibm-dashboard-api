@@ -5,7 +5,7 @@ from pony.orm import db_session, select, PrimaryKey, Required
 
 from app.application.ports import InternalDatasetRepository
 from app.domain import InternalDataset
-from .database import db
+from .database import db, db_singleton
 
 
 class InternalDatasetModel(db.Entity):

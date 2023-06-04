@@ -2,10 +2,10 @@ from pony.orm import db_session, PrimaryKey, Required
 
 from app.application.ports import UserRepository
 from app.domain import User
-from .database import db
+from .database import db_singleton
 
 
-class UserModel(db.Entity):
+class UserModel(db_singleton.db.Entity):
     _table_ = "users"
     user_id = PrimaryKey(str)
     first_name = Required(str)
