@@ -34,3 +34,15 @@ class DataAnalysisService(DataAnalysisGateway):
             raise DataAnalysisServiceError
 
         return response.json()
+
+    def get_percentage_of_matched_certifications(self, dataset_file: File):
+        url = self.base_url + "/graphs/query-matched-certifications"
+
+        files = {"dataset": dataset_file.tuple()}
+
+        response = requests.post(url, files=files)
+
+        if response.status_code != 200:
+            raise DataAnalysisServiceError
+
+        return response.json()
