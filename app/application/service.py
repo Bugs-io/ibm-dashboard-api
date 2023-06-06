@@ -211,6 +211,17 @@ class IBMDashboardService:
 
         return result
 
+    def get_percentage_of_matched_certifications(self):
+        active_dataset = self._get_active_internal_dataset()
+        result = (self.data_analysis_gateway
+                  .get_percentage_of_matched_certifications(
+                      active_dataset
+                      )
+                  )
+        remove(active_dataset.name)
+
+        return result
+
     def _is_valid_file(
             self,
             file_content: bytes,
