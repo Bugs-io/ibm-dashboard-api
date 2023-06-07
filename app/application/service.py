@@ -221,9 +221,20 @@ class IBMDashboardService:
         remove(active_dataset.name)
 
         return result
-    
+
     def get_top_industry_courses(self):
         result = (self.data_analysis_gateway.get_top_industry_courses())
+
+        return result
+
+    def get_certifications_taken_over_the_years(self):
+        active_dataset = self._get_active_internal_dataset()
+
+        result = self.data_analysis_gateway.get_certifications_taken_over_the_years(
+                active_dataset
+                )
+
+        remove(active_dataset.name)
 
         return result
 

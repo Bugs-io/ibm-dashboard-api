@@ -10,6 +10,9 @@ class DataAnalysisGateway:
 
     def get_percentage_of_matched_certifications(self, dataset_file: File):
         return
-    
+
     def get_top_industry_courses(self):
+        return
+
+    def get_certifications_taken_over_the_years(self, dataset_file: File):
         return
