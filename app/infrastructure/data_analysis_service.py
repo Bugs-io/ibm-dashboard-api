@@ -26,8 +26,6 @@ class DataAnalysisService(DataAnalysisGateway):
         files = {"dataset": dataset_file.tuple()}
         params = {"since_years": since_years, "limit": limit}
 
-        print("sending params", params)
-
         response = requests.post(url, files=files, data=params, timeout=5)
 
         if response.status_code != 200:
