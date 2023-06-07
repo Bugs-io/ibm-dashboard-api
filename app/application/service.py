@@ -104,7 +104,7 @@ class IBMDashboardService:
         processed_file_name = f"{file_id}-{file_name}.csv"
 
         processed_file_content = self.data_analysis_gateway.clean_internal_dataset(
-                dataset=File(file_name, file_content)
+                dataset_file=File(file_name, file_content)
                 )
         processed_file_path = self._upload_processed_internal_dataset(
                 file_name=processed_file_name,
@@ -219,6 +219,11 @@ class IBMDashboardService:
                       )
                   )
         remove(active_dataset.name)
+
+        return result
+    
+    def get_top_industry_courses(self):
+        result = (self.data_analysis_gateway.get_top_industry_courses())
 
         return result
 

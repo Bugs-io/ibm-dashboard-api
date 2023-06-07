@@ -46,3 +46,14 @@ class DataAnalysisService(DataAnalysisGateway):
             raise DataAnalysisServiceError
 
         return response.json()
+    
+    def get_top_industry_courses(self):
+        url = self.base_url + "/graphs/top-industry-courses"
+
+        response = requests.get(url)
+
+        if response.status_code != 200:
+            raise DataAnalysisServiceError
+    
+        return response.json()
+

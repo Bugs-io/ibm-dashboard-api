@@ -208,6 +208,15 @@ async def get_percentage_of_matched_certifications(
             response
             )
 
+@app.get("/graphs/top-industry-courses")
+async def get_top_industry_courseS(service: IBMDashboardService = 
+                                   Depends(lambda: di[IBMDashboardService])):
+    response = service.get_top_industry_courses()
+
+    return build_json_success_response(
+        status.HTTP_200_OK,
+        response
+    )
 
 def build_json_success_response(status_code, content) -> JSONResponse:
     return JSONResponse(
