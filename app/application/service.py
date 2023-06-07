@@ -238,6 +238,18 @@ class IBMDashboardService:
 
         return result
 
+    def get_employee_certifications_categorized(self, employee_id: str):
+        active_dataset = self._get_active_internal_dataset()
+        result = (self.data_analysis_gateway
+                  .get_employee_certifications_categorized(
+                      active_dataset,
+                      employee_id
+                      )
+                  )
+        remove(active_dataset.name)
+
+        return result
+
     def _is_valid_file(
             self,
             file_content: bytes,

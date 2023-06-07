@@ -68,3 +68,20 @@ class DataAnalysisService(DataAnalysisGateway):
             raise DataAnalysisServiceError
 
         return response.json()
+
+    def get_employee_certifications_categorized(
+            self,
+            dataset_file: File,
+            employee_id: str
+            ):
+        url = self.base_url + \
+                f"/employees/{employee_id}/certifications-categorized"
+
+        files = {"dataset": dataset_file.tuple()}
+
+        response = requests.post(url, files=files)
+
+        if response.status_code != 200:
+            raise DataAnalysisServiceError
+
+        return response.json()

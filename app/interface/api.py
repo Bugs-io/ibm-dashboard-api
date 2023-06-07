@@ -221,7 +221,7 @@ async def get_percentage_of_matched_certifications(
 
 @app.get("/graphs/top-industry-courses")
 @cache(expire=A_WEEK_IN_SECONDS)
-async def get_top_industry_courseS(service: IBMDashboardService = 
+async def get_top_industry_courseS(service: IBMDashboardService =
                                    Depends(lambda: di[IBMDashboardService])):
     response = service.get_top_industry_courses()
 
@@ -236,7 +236,18 @@ async def get_certifications_taken_over_the_years(
         service: IBMDashboardService = Depends(lambda: di[IBMDashboardService])
 ):
     response = service.get_certifications_taken_over_the_years()
+    return build_json_success_response(
+            status.HTTP_200_OK,
+            response
+            )
 
+
+@app.get("/graphs/employees/{employee_id}/certifications-categorized")
+async def get_employee_certifications_categorized(
+        employee_id: str,
+        service: IBMDashboardService = Depends(lambda: di[IBMDashboardService])
+        ):
+    response = service.get_employee_certifications_categorized(employee_id)
     return build_json_success_response(
             status.HTTP_200_OK,
             response
