@@ -1,10 +1,13 @@
-import json
 from typing import Optional
 from jwt import InvalidTokenError
 from kink import di
 from fastapi import FastAPI, UploadFile, status, Depends, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+from fastapi_cache.decorator import cache
+from redis import asyncio as aioredis
 
 from app.config import Config
 from app.application.service import IBMDashboardService
@@ -15,8 +18,15 @@ from app.application.errors import UserAlreadyExistsError, InvalidEmailError,\
     InternalDatasetCreationError
 
 PUBLIC_ROUTES = ["/login", "/signup"]
+A_WEEK_IN_SECONDS = 604800
 
 app = FastAPI()
+
+
+@app.on_event("startup")
+async def startup():
+    redis = aioredis.from_url(Config.REDIS_URL)
+    FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
 
 
 @app.middleware("http")
@@ -208,7 +218,9 @@ async def get_percentage_of_matched_certifications(
             response
             )
 
+
 @app.get("/graphs/top-industry-courses")
+@cache(expire=A_WEEK_IN_SECONDS)
 async def get_top_industry_courseS(service: IBMDashboardService = 
                                    Depends(lambda: di[IBMDashboardService])):
     response = service.get_top_industry_courses()
@@ -217,6 +229,7 @@ async def get_top_industry_courseS(service: IBMDashboardService =
         status.HTTP_200_OK,
         response
     )
+
 
 def build_json_success_response(status_code, content) -> JSONResponse:
     return JSONResponse(
