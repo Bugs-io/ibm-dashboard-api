@@ -25,3 +25,6 @@ class DataAnalysisGateway:
             dataset_file: File,
             emplooye_id: str):
         return
+
+    def get_certifications_distribution(self, dataset_file: File):
+        return

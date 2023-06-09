@@ -260,6 +260,15 @@ class IBMDashboardService:
 
         return result
 
+    def get_certifications_distribution(self):
+        active_dataset = self._get_active_internal_dataset()
+
+        result = self.data_analysis_gateway.get_certifications_distribution(active_dataset)
+
+        remove(active_dataset.name)
+
+        return result
+
     def _is_valid_file(
             self,
             file_content: bytes,
@@ -273,7 +282,6 @@ class IBMDashboardService:
 
 
 def time_frame_to_years(time_frame: str) -> int | None:
-    print(time_frame)
     years = {
         "last_year": 1,
         "last_5_years": 5,

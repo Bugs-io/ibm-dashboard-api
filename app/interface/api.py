@@ -265,6 +265,17 @@ async def get_employee_certifications_categorized(
     )
 
 
+@app.get("/graphs/certifications-distribution")
+async def get_certifications_distribution(
+        service: IBMDashboardService = Depends(lambda: di[IBMDashboardService])
+):
+    response = service.get_certifications_distribution()
+    return build_json_success_response(
+        status.HTTP_200_OK,
+        response
+    )
+
+
 def build_json_success_response(status_code, content) -> JSONResponse:
     return JSONResponse(
         status_code=status_code,

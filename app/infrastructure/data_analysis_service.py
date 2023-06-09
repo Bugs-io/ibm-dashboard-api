@@ -98,3 +98,15 @@ class DataAnalysisService(DataAnalysisGateway):
             raise DataAnalysisServiceError
 
         return response.json()
+
+    def get_certifications_distribution(self, dataset_file: File):
+        url = self.base_url + "/graphs/certifications-distribution"
+
+        files = {"dataset": dataset_file.tuple()}
+
+        response = requests.post(url, files=files, timeout=5)
+
+        if response.status_code != 200:
+            raise DataAnalysisServiceError
+
+        return response.json()
