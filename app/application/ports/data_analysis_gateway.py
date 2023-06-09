@@ -17,6 +17,9 @@ class DataAnalysisGateway:
     def get_certifications_taken_over_the_years(self, dataset_file: File):
         return
 
+    def get_certifications_categorized(self, dataset_file: File):
+        return
+
     def get_employee_certifications_categorized(
             self,
             dataset_file: File,

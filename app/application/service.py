@@ -8,20 +8,20 @@ from kink import inject
 import magic
 
 from app.application.ports import ObjectStorage, UserRepository,\
-        Encrypter, TokenManager, InternalDatasetRepository,\
-        DataAnalysisGateway
+    Encrypter, TokenManager, InternalDatasetRepository,\
+    DataAnalysisGateway
 from app.application.errors import InvalidFileTypeError, InvalidEmailError,\
     UserAlreadyExistsError, UserCreationError, UserDoesNotExistError,\
     InvalidPasswordError, InternalDatasetCreationError, InvalidNameError,\
     DatasetNotFound, DatasetNotAvailable
 from app.application.dtos import DatasetDTO, AuthRequestDTO, AuthResponseDTO,\
-        SignUpRequestDTO, UserDTO
+    SignUpRequestDTO, UserDTO
 from app.domain import InternalDataset, User, File
 
 SPREADSHEET_MIME_TYPES = [
-        "application/vnd.ms-excel",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        ]
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+]
 
 CSV_MIME_TYPE = ["text/csv"]
 
@@ -38,7 +38,7 @@ class IBMDashboardService:
             user_repository: UserRepository,
             internal_dataset_repository: InternalDatasetRepository,
             data_analysis_gateway: DataAnalysisGateway
-            ):
+    ):
         self.encrypter = encrypter
         self.object_storage = object_storage
         self.token_manager = token_manager
@@ -68,9 +68,9 @@ class IBMDashboardService:
 
         try:
             self.object_storage.download_internal_dataset_from_url(
-                    blob_path,
-                    tempfile_path
-                    )
+                blob_path,
+                tempfile_path
+            )
         except Exception as exc:
             raise DatasetNotFound from exc
 
@@ -86,15 +86,15 @@ class IBMDashboardService:
             raise InvalidFileTypeError
 
         return self.object_storage.upload_raw_internal_dataset(
-                file_name,
-                file_content
-                )
+            file_name,
+            file_content
+        )
 
     def _upload_processed_internal_dataset(self, file_name: str, file_content: bytes) -> str:
         return self.object_storage.upload_processed_internal_dataset(
-                file_name,
-                file_content
-                )
+            file_name,
+            file_content
+        )
 
     def upload_internal_dataset(self, file_name: str, file_content: bytes):
         file_id = self._get_uuid_as_str()
@@ -104,26 +104,26 @@ class IBMDashboardService:
         processed_file_name = f"{file_id}-{file_name}.csv"
 
         processed_file_content = self.data_analysis_gateway.clean_internal_dataset(
-                dataset_file=File(file_name, file_content)
-                )
+            dataset_file=File(file_name, file_content)
+        )
         processed_file_path = self._upload_processed_internal_dataset(
-                file_name=processed_file_name,
-                file_content=processed_file_content
-                )
+            file_name=processed_file_name,
+            file_content=processed_file_content
+        )
 
         raw_file_path = self._upload_raw_internal_dataset(
-                file_name=raw_file_name,
-                file_content=file_content
-                )
+            file_name=raw_file_name,
+            file_content=file_content
+        )
 
         dataset_id = self._get_uuid_as_str()
         dataset = InternalDataset(
-                id=dataset_id,
-                processed_file_path=processed_file_path,
-                raw_file_path=raw_file_path,
-                is_active=True,
-                uploaded_at=datetime.utcnow()
-                )
+            id=dataset_id,
+            processed_file_path=processed_file_path,
+            raw_file_path=raw_file_path,
+            is_active=True,
+            uploaded_at=datetime.utcnow()
+        )
 
         try:
             self.internal_dataset_repository.update_active_internal_dataset()
@@ -131,9 +131,9 @@ class IBMDashboardService:
         except Exception as exc:
             raise InternalDatasetCreationError from exc
         return DatasetDTO(
-                id=dataset.id,
-                processed_file_path=dataset.processed_file_path,
-                raw_file_path=dataset.raw_file_path)
+            id=dataset.id,
+            processed_file_path=dataset.processed_file_path,
+            raw_file_path=dataset.raw_file_path)
 
     def signup(self, input_dto: SignUpRequestDTO) -> AuthResponseDTO:
         email = input_dto.email
@@ -153,12 +153,12 @@ class IBMDashboardService:
         hashed_password = self.encrypter.encrypt_password(password)
 
         user = User(
-                id=str(uuid4()),
-                first_name=first_name,
-                last_name=last_name,
-                email=email,
-                password=hashed_password
-                )
+            id=str(uuid4()),
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            password=hashed_password
+        )
 
         try:
             self.user_repository.save(user)
@@ -191,21 +191,21 @@ class IBMDashboardService:
             raise UserDoesNotExistError
 
         return UserDTO(
-                id=user.id,
-                first_name=user.first_name,
-                last_name=user.last_name,
-                email=user.email
-                )
+            id=user.id,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            email=user.email
+        )
 
     def get_most_attended_certifications(self, time_frame: str, limit: int):
         active_dataset = self._get_active_internal_dataset()
         since_years = time_frame_to_years(time_frame)
 
         result = self.data_analysis_gateway.get_most_attended_certifications(
-                active_dataset,
-                since_years,
-                limit
-                )
+            active_dataset,
+            since_years,
+            limit
+        )
 
         remove(active_dataset.name)
 
@@ -216,7 +216,7 @@ class IBMDashboardService:
         result = (self.data_analysis_gateway
                   .get_percentage_of_matched_certifications(
                       active_dataset
-                      )
+                  )
                   )
         remove(active_dataset.name)
 
@@ -231,8 +231,18 @@ class IBMDashboardService:
         active_dataset = self._get_active_internal_dataset()
 
         result = self.data_analysis_gateway.get_certifications_taken_over_the_years(
-                active_dataset
-                )
+            active_dataset
+        )
+
+        remove(active_dataset.name)
+
+        return result
+
+    def get_certifications_categorized(self):
+        active_dataset = self._get_active_internal_dataset()
+
+        result = self.data_analysis_gateway.get_certifications_categorized(
+            active_dataset)
 
         remove(active_dataset.name)
 
@@ -244,7 +254,7 @@ class IBMDashboardService:
                   .get_employee_certifications_categorized(
                       active_dataset,
                       employee_id
-                      )
+                  )
                   )
         remove(active_dataset.name)
 
@@ -254,7 +264,7 @@ class IBMDashboardService:
             self,
             file_content: bytes,
             file_types: List[str]
-            ) -> bool:
+    ) -> bool:
         file_type = magic.from_buffer(file_content, mime=True)
         return file_type in file_types
 
@@ -265,10 +275,10 @@ class IBMDashboardService:
 def time_frame_to_years(time_frame: str) -> int | None:
     print(time_frame)
     years = {
-            "last_year": 1,
-            "last_5_years": 5,
-            "last_10_years": 10,
-            "all_time": 100
-            }
+        "last_year": 1,
+        "last_5_years": 5,
+        "last_10_years": 10,
+        "all_time": 100
+    }
 
     return years.get(time_frame)
