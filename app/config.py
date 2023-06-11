@@ -20,3 +20,4 @@ class Config:
     DB_FILENAME = os.getenv("DB_FILENAME")
     DB_PROVIDER = os.getenv("DB_PROVIDER")
     TESTING = os.getenv("TESTING", 'False').lower() in ('true', '1', 't')
+    REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")

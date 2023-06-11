@@ -3,7 +3,7 @@ from app.config import Config
 from app.domain.file import File
 from app.application.ports import DataAnalysisGateway
 from app.application.errors import ProcessedFileCreationError, \
-        DataAnalysisServiceError
+    DataAnalysisServiceError
 
 
 class DataAnalysisService(DataAnalysisGateway):
@@ -13,7 +13,8 @@ class DataAnalysisService(DataAnalysisGateway):
     def clean_internal_dataset(self, dataset_file: File) -> bytes:
         url = self.base_url + "/clean-internal-dataset"
 
-        response = requests.post(url, files={"file": dataset_file.tuple()}, timeout=5)
+        response = requests.post(
+            url, files={"file": dataset_file.tuple()}, timeout=5)
 
         if response.status_code != 200:
             raise ProcessedFileCreationError
@@ -29,6 +30,81 @@ class DataAnalysisService(DataAnalysisGateway):
         print("sending params", params)
 
         response = requests.post(url, files=files, data=params, timeout=5)
+
+        if response.status_code != 200:
+            raise DataAnalysisServiceError
+
+        return response.json()
+
+    def get_percentage_of_matched_certifications(self, dataset_file: File):
+        url = self.base_url + "/graphs/query-matched-certifications"
+
+        files = {"dataset": dataset_file.tuple()}
+
+        response = requests.post(url, files=files)
+
+        if response.status_code != 200:
+            raise DataAnalysisServiceError
+
+        return response.json()
+
+    def get_top_industry_courses(self):
+        url = self.base_url + "/graphs/top-industry-courses"
+
+        response = requests.get(url)
+
+        if response.status_code != 200:
+            raise DataAnalysisServiceError
+
+        return response.json()
+
+    def get_certifications_taken_over_the_years(self, dataset_file: File):
+        url = self.base_url + "/graphs/over-the-years"
+
+        files = {"dataset": dataset_file.tuple()}
+
+        response = requests.post(url, files=files, timeout=5)
+
+        if response.status_code != 200:
+            raise DataAnalysisServiceError
+
+        return response.json()
+
+    def get_certifications_categorized(self, dataset_file: File):
+        url = self.base_url + "/graphs/certifications-categorized"
+
+        files = {"dataset": dataset_file.tuple()}
+
+        response = requests.post(url, files=files, timeout=5)
+
+        if response.status_code != 200:
+            raise DataAnalysisServiceError
+
+        return response.json()
+
+    def get_employee_certifications_categorized(
+            self,
+            dataset_file: File,
+            employee_id: str
+    ):
+        url = self.base_url + \
+            f"/employees/{employee_id}/certifications-categorized"
+
+        files = {"dataset": dataset_file.tuple()}
+
+        response = requests.post(url, files=files)
+
+        if response.status_code != 200:
+            raise DataAnalysisServiceError
+
+        return response.json()
+
+    def get_certifications_distribution(self, dataset_file: File):
+        url = self.base_url + "/graphs/certifications-distribution"
+
+        files = {"dataset": dataset_file.tuple()}
+
+        response = requests.post(url, files=files, timeout=5)
 
         if response.status_code != 200:
             raise DataAnalysisServiceError
