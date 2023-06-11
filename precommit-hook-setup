@@ -1,0 +1,3 @@
+#!/bin/bash
+echo -e "#!/bin/bash\npylint \$(git ls-files "*.py")\n\npylintScore=\$(pylint -s y \$(git ls-files "*.py") | sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p')\npylintScoreInt=\${pylintScore%.*}\nif [ \$pylintScoreInt -lt 8 ]\nthen\necho "Pylint Test Failed ❌"\necho "Your code must be rated 8 or more to pass the test"\necho "Code current score: \$pylintScoreInt/10\\\\n"\nelse\necho -e "Pylint Test Passed Successfully✅"\necho \"----------------------------\"\nfi" > .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit

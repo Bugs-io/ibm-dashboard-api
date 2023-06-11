@@ -1,0 +1,27 @@
+name: Pylint Check
+
+on: [pull_request]
+
+jobs:
+  pylint_check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Analysing code with pylint
+      run: |
+        pylintScore=$(pylint -s y $(git ls-files "*.py") | sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p') 
+        pylintScoreInt=${pylintScore%.*}
+        if [ $pylintScoreInt -lt 8 ]
+        then 
+          echo "Your code must be rated 8 or more to pass the test"
+          echo "Code current score: $pylintScoreInt/10"
+          exit 1
+        fi
